@@ -1,7 +1,7 @@
 # go-sample
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/titusjaka/go-sample)
-![CI](https://github.com/titusjaka/go-sample/workflows/CI/badge.svg)
+[![GitHub release](https://img.shields.io/github/v/release/titusjaka/go-sample)](https://github.com/titusjaka/go-sample/releases/latest)
+[![CI](https://github.com/titusjaka/go-sample/workflows/CI/badge.svg)](https://github.com/titusjaka/go-sample/actions)
 [![codecov](https://codecov.io/gh/titusjaka/go-sample/branch/main/graph/badge.svg?token=UNJY7V5SZL)](https://codecov.io/gh/titusjaka/go-sample)
 [![Go Report Card](https://goreportcard.com/badge/github.com/titusjaka/go-sample)](https://goreportcard.com/report/github.com/titusjaka/go-sample)
 [![GitHub license](https://img.shields.io/github/license/titusjaka/go-sample)](https://github.com/titusjaka/go-sample/blob/main/LICENSE)

@@ -28,6 +28,7 @@ import (
 
 var errStopped = errors.New("stopped")
 
+// NewServerCmd creates a new server CLI sub-command
 func NewServerCmd() *cli.Command {
 	return &cli.Command{
 		Name:        "server",

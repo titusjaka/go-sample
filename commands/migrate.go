@@ -23,6 +23,7 @@ const templateContent = `-- +migrate Up
 -- +migrate Down
 `
 
+// NewMigrateCmd creates a new migrate CLI sub-command
 func NewMigrateCmd() *cli.Command {
 	return &cli.Command{
 		Name:        "migrate",

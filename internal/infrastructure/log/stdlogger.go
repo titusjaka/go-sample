@@ -12,6 +12,7 @@ import (
 type Level = zapcore.Level
 
 const (
+	// Error level
 	Error = zapcore.ErrorLevel
 )
 

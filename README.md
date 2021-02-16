@@ -59,7 +59,7 @@ docker-compose up --build
 ```
 
 
-## Future improvements:
+## Future improvements
 - [ ] Return verbose API errors with exact fields in it:
     ```json
     {

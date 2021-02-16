@@ -4,10 +4,15 @@ package service
 type ErrorType int
 
 const (
+	// BadRequest denotes that user input is incorrect
 	BadRequest ErrorType = iota + 1
+	// InternalError denotes infrastructure error
 	InternalError
+	// Unauthorized denotes that user is not authorized
 	Unauthorized
+	// NotFound speaks for itself
 	NotFound
+	// Forbidden means user has no access for a resource
 	Forbidden
 )
 

@@ -13,7 +13,6 @@ This example uses:
   - [cli](https://github.com/urfave/cli) for building neat commands;
   - [embedded-postgres](https://github.com/fergusstrange/embedded-postgres) for database testing;
   - [go-kit](https://github.com/go-kit/kit) for transport layer;
-  - [go.rice](https://github.com/GeertJohan/go.rice) for file embedding;
   - [PostgreSQL](https://www.postgresql.org/) as a database and [pq](https://github.com/lib/pq) as a driver;
   - [testify](https://github.com/stretchr/testify) and [mock](https://github.com/golang/mock) for tests;
   - [ozzo-validation](https://github.com/go-ozzo/ozzo-validation) for request validation;
@@ -41,9 +40,9 @@ go-sample
 │   └── infrastructure      // Infrastructure code of the application.
 │       ├── api             // API-related utilities: middlewares, authentication, error handling for the transport layer.
 │       ├── log             // Convenient logger to decouple from the standard log package.
-│       ├── migrate         // Reusable migration utilities.
 │       └── service         // Service-related reusable code: error handling for the service layer, etc.
-└── migrations              // This folder contains *.sql migrations.
+└── migrate                 // Reusable migration utilities.
+    └── migratorions        // This folder contains *.sql migrations.
 ```
 
 ## Installation

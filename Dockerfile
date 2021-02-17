@@ -1,4 +1,4 @@
-FROM golang:1.15.8-alpine3.13 AS build-env
+FROM golang:1.16-alpine3.13 AS build-env
 
 # Set environment variables
 ENV GO_WORKDIR /go/src/github.com/titusjaka/go-sample
@@ -13,10 +13,8 @@ ADD . $GO_WORKDIR
 RUN set -eux; apk update; apk add --no-cache git openssh
 
 # Install dependencies
-RUN go get github.com/GeertJohan/go.rice/rice
 RUN go mod download
 RUN go mod verify
-RUN cd $GO_WORKDIR/commands && rice embed-go
 RUN cd $GO_WORKDIR/cmd/cli && go install
 
 # Build ca-certificates

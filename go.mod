@@ -1,9 +1,8 @@
 module github.com/titusjaka/go-sample
 
-go 1.15
+go 1.16
 
 require (
-	github.com/GeertJohan/go.rice v1.0.2
 	github.com/fergusstrange/embedded-postgres v1.3.0
 	github.com/go-chi/chi v1.5.1
 	github.com/go-chi/cors v1.1.1

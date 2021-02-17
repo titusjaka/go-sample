@@ -8,15 +8,14 @@ import (
 	"testing"
 	"time"
 
-	rice "github.com/GeertJohan/go.rice"
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 	_ "github.com/lib/pq" // import pg driver
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
-	"github.com/titusjaka/go-sample/internal/infrastructure/migrate"
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
+	"github.com/titusjaka/go-sample/migrate"
 )
 
 type stopFunc func() error
@@ -576,7 +575,7 @@ func initPGStorage(params connectionParams) (storage *snippets.PGStorage, stop s
 }
 
 func applyMigrations(ctx context.Context, db *sql.DB) (int, error) {
-	source := migrate.NewRiceSource(rice.MustFindBox("../../../migrations"))
+	source := migrate.NewEmbeddedSource()
 	migrator := migrate.NewMigrator(db, source)
 	return migrator.Up(ctx)
 }

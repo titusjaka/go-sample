@@ -11,11 +11,10 @@ import (
 	"text/template"
 	"time"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/urfave/cli/v2"
 
 	"github.com/titusjaka/go-sample/internal/infrastructure/log"
-	"github.com/titusjaka/go-sample/internal/infrastructure/migrate"
+	"github.com/titusjaka/go-sample/migrate"
 )
 
 const templateContent = `-- +migrate Up
@@ -99,7 +98,7 @@ func migrateDown(c *cli.Context) error {
 func migrateCreate(c *cli.Context) error {
 	logger := log.New()
 
-	dir := filepath.Clean("migrations")
+	dir := filepath.Clean("./migrate/migrations")
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("can't create directory for migrations: %w", err)
@@ -131,7 +130,7 @@ func initMigrator(dsn string) (*migrate.Migrator, error) {
 		return nil, fmt.Errorf("can't open db connection: %w", err)
 	}
 
-	source := migrate.NewRiceSource(rice.MustFindBox("../migrations"))
+	source := migrate.NewEmbeddedSource()
 	migrator := migrate.NewMigrator(db, source)
 
 	return migrator, nil

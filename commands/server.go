@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -23,7 +22,7 @@ import (
 	"github.com/titusjaka/go-sample/internal/business/snippets"
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
 	"github.com/titusjaka/go-sample/internal/infrastructure/log"
-	"github.com/titusjaka/go-sample/internal/infrastructure/migrate"
+	"github.com/titusjaka/go-sample/migrate"
 )
 
 var errStopped = errors.New("stopped")
@@ -194,7 +193,7 @@ func setupServer(
 }
 
 func applyMigrations(ctx context.Context, db *sql.DB) (int, error) {
-	source := migrate.NewRiceSource(rice.MustFindBox("../migrations"))
+	source := migrate.NewEmbeddedSource()
 	migrator := migrate.NewMigrator(db, source)
 	return migrator.Up(ctx)
 }

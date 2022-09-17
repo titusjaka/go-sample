@@ -130,8 +130,10 @@ func initMigrator(dsn string) (*migrate.Migrator, error) {
 		return nil, fmt.Errorf("can't open db connection: %w", err)
 	}
 
-	source := migrate.NewEmbeddedSource()
-	migrator := migrate.NewMigrator(db, source)
+	source, err := migrate.NewEmbeddedSource()
+	if err != nil {
+		return nil, fmt.Errorf("can't create embedded source: %w", err)
+	}
 
-	return migrator, nil
+	return migrate.NewMigrator(db, source), nil
 }

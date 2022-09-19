@@ -169,9 +169,10 @@ func setupServer(
 	}
 
 	server := http.Server{
-		Addr:     listen,
-		Handler:  r,
-		ErrorLog: errLogger,
+		Addr:              listen,
+		Handler:           r,
+		ErrorLog:          errLogger,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 	errCh := make(chan error, 1)
 

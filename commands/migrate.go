@@ -106,7 +106,7 @@ func migrateCreate(c *cli.Context) error {
 
 	fileName := fmt.Sprintf("%d_%s.sql", time.Now().Unix(), c.Args().First())
 	pathName := path.Join(dir, fileName)
-	file, err := os.Create(pathName)
+	file, err := os.Create(filepath.Clean(pathName))
 	if err != nil {
 		return fmt.Errorf("can't create migration file (%q): %w", pathName, err)
 	}

@@ -575,7 +575,10 @@ func initPGStorage(params connectionParams) (storage *snippets.PGStorage, stop s
 }
 
 func applyMigrations(ctx context.Context, db *sql.DB) (int, error) {
-	source := migrate.NewEmbeddedSource()
-	migrator := migrate.NewMigrator(db, source)
-	return migrator.Up(ctx)
+	source, err := migrate.NewEmbeddedSource()
+	if err != nil {
+		return 0, fmt.Errorf("can't create embedded source: %w", err)
+	}
+
+	return migrate.NewMigrator(db, source).Up(ctx)
 }

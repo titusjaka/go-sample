@@ -169,9 +169,10 @@ func setupServer(
 	}
 
 	server := http.Server{
-		Addr:     listen,
-		Handler:  r,
-		ErrorLog: errLogger,
+		Addr:              listen,
+		Handler:           r,
+		ErrorLog:          errLogger,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 	errCh := make(chan error, 1)
 
@@ -193,7 +194,10 @@ func setupServer(
 }
 
 func applyMigrations(ctx context.Context, db *sql.DB) (int, error) {
-	source := migrate.NewEmbeddedSource()
-	migrator := migrate.NewMigrator(db, source)
-	return migrator.Up(ctx)
+	source, err := migrate.NewEmbeddedSource()
+	if err != nil {
+		return 0, fmt.Errorf("can't create embedded source: %w", err)
+	}
+
+	return migrate.NewMigrator(db, source).Up(ctx)
 }

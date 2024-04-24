@@ -1,0 +1,35 @@
+changelog:
+  categories:
+    - title: Breaking Changes 🛠
+      labels:
+        - breaking-change
+    - title: New Features 🎉
+      labels:
+        - feature
+    - title: Bug Fixes 🐞
+      labels:
+        - bug
+    - title: Documentation Updates 📚
+      labels:
+        - documentation
+    - title: Minor Changes 🧰
+      labels:
+        - minor
+    - title: CI/CD Changes 🚀
+      labels:
+        - ci-cd
+    - title: Refactoring ♻️
+      labels:
+        - refactor
+    - title: Tests 🧪
+      labels:
+        - tests
+    - title: Configuration Changes ⚙️
+      labels:
+        - configuration
+    - title: Permissions Changes 🔑
+      labels:
+        - permissions
+    - title: Other Changes 👀
+      labels:
+        - "*"

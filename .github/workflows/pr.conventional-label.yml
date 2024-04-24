@@ -1,0 +1,32 @@
+on:
+  pull_request:
+    types:
+      - opened
+
+name: pr:conventional-label
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - uses: bcoe/conventional-release-labels@v1
+        with:
+          type_labels: |
+            {
+              "feat": "feature",
+              "fix": "bug",
+              "docs": "documentation",
+              "chore": "minor",
+              "infra": "infrastructure",
+              "minor": "minor",
+              "config": "configuration",
+              "perm": "permissions",
+              "ci-cd": "ci-cd",
+              "cicd": "ci-cd",
+              "ci": "ci-cd",
+              "refactor": "refactor",
+              "test": "tests",
+              "tests": "tests"
+            }
+          ignored_types: |
+            []

@@ -25,7 +25,7 @@ import (
 	"github.com/titusjaka/go-sample/migrate"
 )
 
-var errStopped = errors.New("stopped")
+var ErrStopped = errors.New("stopped")
 
 // NewServerCmd creates a new server CLI sub-command
 func NewServerCmd() *cli.Command {
@@ -101,13 +101,13 @@ func runServer(c *cli.Context) (err error) {
 
 		select {
 		case <-stop:
-			return errStopped
+			return ErrStopped
 		case <-ctx.Done():
 			return nil
 		}
 	})
 
-	if err = gr.Wait(); err != nil && err != errStopped {
+	if err = gr.Wait(); err != nil && err != ErrStopped {
 		return fmt.Errorf("error during wait: %w", err)
 	}
 

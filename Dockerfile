@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine3.13 AS build-env
+FROM golang:1.22-alpine3.19 AS build-env
 
 # Set environment variables
 ENV GO_WORKDIR /go/src/github.com/titusjaka/go-sample
@@ -24,7 +24,7 @@ FROM alpine:latest as certs
 RUN apk --update add ca-certificates
 
 # Put everything together in a clean image
-FROM alpine:3.13
+FROM alpine:3.19
 
 # Add ca-certificates
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

@@ -2,18 +2,17 @@
 name: "tag:release"
 on:
   push:
-    # TODO: delete after debug
-    branches:
-      - '**'
     tags:
       - v*
 
 jobs:
   docker-release:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,8 +26,6 @@ jobs:
           images: |
             ghcr.io/${{ github.repository }}
           tags: |
-            type=sha,prefix=
-            type=ref,event=branch
             type=semver,pattern={{version}},prefix=v
 
       # Prepare outputs for build-args
@@ -58,8 +55,8 @@ jobs:
           file: ./Dockerfile
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
-#          cache-from: type=gha
-#          cache-to: type=gha,mode=max
+          #          cache-from: type=gha
+          #          cache-to: type=gha,mode=max
           build-args: |
             GITHUB_REPOSITORY=${{ github.repository }}
             GIT_BRANCH=${{ github.ref_name }}

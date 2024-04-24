@@ -13,7 +13,7 @@ require (
 	github.com/gorilla/schema v1.2.0
 	github.com/lib/pq v1.2.0
 	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.3.0
 	go.uber.org/zap v1.13.0
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
@@ -41,6 +41,6 @@ require (
 	golang.org/x/lint v0.0.0-20190930215403-16217165b5de // indirect
 	golang.org/x/tools v0.0.0-20200103221440-774c71fcf114 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
-	gopkg.in/yaml.v2 v2.2.5 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.0.1-2019.2.3 // indirect
 )

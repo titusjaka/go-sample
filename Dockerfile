@@ -1,35 +1,47 @@
+ARG NAME=go-sample
+ARG VERSION
+
 FROM golang:1.22-alpine3.19 AS build-env
 
+# Declare build arguments
+ARG NAME
+ARG VERSION
+ARG GIT_COMMIT_SHA
+ARG GIT_BRANCH
+
 # Set environment variables
-ENV GO_WORKDIR /go/src/github.com/titusjaka/go-sample
-ENV GO111MODULE=on
-ENV CGO_ENABLED=0
+ENV NAME=${NAME}
+ENV VERSION=${VERSION}
+ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA}
+ENV GIT_BRANCH=${GIT_BRANCH}
 
 # Set working directory
-WORKDIR $GO_WORKDIR
-ADD . $GO_WORKDIR
+WORKDIR /go/src/${NAME}
 
 # Add git and openssh
-RUN set -eux; apk update; apk add --no-cache git openssh
+RUN set -eux; apk update; apk add --no-cache git openssh make ca-certificates tzdata
+
+# Copy source code
+COPY . .
 
 # Install dependencies
-RUN go mod download
-RUN go mod verify
-RUN cd $GO_WORKDIR/cmd/cli && go install
+RUN go mod download -x
 
-# Build ca-certificates
-FROM alpine:latest as certs
+# Build the application
+RUN make build
 
-# Add ca-certificates dependency
-RUN apk --update add ca-certificates
 
 # Put everything together in a clean image
 FROM alpine:3.19
 
+ARG NAME
+
 # Add ca-certificates
-COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build-env /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+# COPY tzdata
+COPY --from=build-env /usr/share/zoneinfo /usr/share/zoneinfo
 
 # Copy binary into PATH
-COPY --from=build-env /go/bin/cli /usr/local/bin/go-sample
+COPY --from=build-env /go/src/${NAME}/bin/${NAME} /service
 
-ENTRYPOINT ["go-sample"]
+ENTRYPOINT ["/service"]

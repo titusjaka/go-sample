@@ -22,9 +22,9 @@ services:
     depends_on:
       - postgres
     environment:
-      LISTEN: ":4040"
-      DATABASE_DSN: "postgresql://postgres:docker@postgres:5432/snippets?sslmode=disable"
-      API_TOKEN: ""
+      HTTP_LISTEN: ":4040"
+      POSTGRES_DSN: "postgresql://postgres:docker@postgres:5432/snippets?sslmode=disable"
+      API_TOKEN: "secret"
     command: [ "server" ]
     ports:
       - 4040:4040

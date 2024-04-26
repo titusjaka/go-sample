@@ -2,6 +2,7 @@ package log
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 //go:generate mockgen -source=logger.go -destination ./mocks.go -package log -mock_names Logger=MockLogger
@@ -41,8 +42,13 @@ func New() *Log {
 	loggerConf := zap.NewProductionConfig()
 	loggerConf.DisableCaller = true
 	loggerConf.DisableStacktrace = true
+	loggerConf.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+
 	logger, _ := loggerConf.Build()
-	logger.WithOptions(zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
+	logger.WithOptions(
+		zap.AddCaller(),
+		zap.AddStacktrace(zap.ErrorLevel),
+	)
 
 	return &Log{
 		zap: logger,

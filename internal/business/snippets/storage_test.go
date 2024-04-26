@@ -14,8 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
+	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
-	"github.com/titusjaka/go-sample/migrate"
+	"github.com/titusjaka/go-sample/migrations"
 )
 
 type stopFunc func() error
@@ -575,10 +576,5 @@ func initPGStorage(params connectionParams) (storage *snippets.PGStorage, stop s
 }
 
 func applyMigrations(ctx context.Context, db *sql.DB) (int, error) {
-	source, err := migrate.NewEmbeddedSource()
-	if err != nil {
-		return 0, fmt.Errorf("can't create embedded source: %w", err)
-	}
-
-	return migrate.NewMigrator(db, source).Up(ctx)
+	return pgmigrator.NewMigrator(db, migrations.Dir).Up(ctx)
 }

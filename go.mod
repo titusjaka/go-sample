@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/titusjaka/kong-dotenv-go v0.1.0
 	go.uber.org/zap v1.13.0
-	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+	golang.org/x/sync v0.7.0
 )
 
 require (

@@ -18,8 +18,8 @@ ENV GIT_BRANCH=${GIT_BRANCH}
 # Set working directory
 WORKDIR /go/src/${NAME}
 
-# Add git and openssh
-RUN set -eux; apk update; apk add --no-cache git openssh make ca-certificates tzdata
+# Add build dependencies
+RUN set -eux; apk update; apk add --no-cache git openssh make ca-certificates tzdata go-task
 
 # Copy source code
 COPY . .
@@ -28,7 +28,7 @@ COPY . .
 RUN go mod download -x
 
 # Build the application
-RUN make build
+RUN go-task build
 
 
 # Put everything together in a clean image

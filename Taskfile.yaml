@@ -1,0 +1,106 @@
+version: '3'
+
+vars:
+  ENV_FILE: ./.env
+  APP_NAME: go-sample
+
+tasks:
+
+  default:
+    desc: Default task -> show help.
+    silent: true
+    cmds:
+      - task: help
+
+  help:
+    silent: true
+    desc: |-
+      Show this help.
+    cmds:
+      - task --list-all
+      - cmd: |-
+          echo -e "-----\nIf you want to use another env-file, pass it as a variable: 'task <TASK> ENV_FILE=./.env.test'"
+      - cmd: |-
+          echo "Pass arguments to the task like this: 'task <TASK> -- arg1 arg2'. For example: 'task migrate -- up'."
+
+  init:
+    desc: Populate env-file with default values.
+    cmds:
+      - go run ./main.go {{.CLI_ARGS}} --dump-envs > {{.ENV_FILE}}
+
+  run:
+    desc: Run application.
+    cmds:
+      - go run ./main.go --env-file {{.ENV_FILE}} {{.CLI_ARGS}}
+
+  build:
+    desc: |-
+      Build application.
+    cmds:
+      - >-
+        go build -ldflags "-s 
+        -X main.Version={{.VERSION}}  
+        -X main.GitBranch={{.GIT_BRANCH}} 
+        -X main.GitCommitSHA={{.GIT_COMMIT_SHA}}" 
+        -v -o ./bin/{{.APP_NAME}} {{.CLI_ARGS}} .
+    vars:
+      VERSION:
+        sh: git describe --tags 2>/dev/null
+      GIT_BRANCH:
+        sh: git rev-parse --abbrev-ref HEAD
+      GIT_COMMIT_SHA:
+        sh: git rev-parse HEAD
+    requires:
+      vars: [ APP_NAME ]
+
+  lint:
+    desc: Run linter.
+    cmds:
+      - golangci-lint run {{.CLI_ARGS}}
+
+  test:
+    desc: Run all tests.
+    cmds:
+      - go test {{.CLI_ARGS}} ./...
+
+  test-unit:
+    desc: Run unit tests.
+    cmds:
+      - task: test
+        vars:
+          CLI_ARGS: -short {{.CLI_ARGS}}
+
+  coverage:
+    desc: Run tests with coverage.
+    vars:
+      COVERAGE_FILE: coverage.txt
+    cmds:
+      - go test ./... -coverprofile={{.COVERAGE_FILE}} -covermode=atomic
+
+  coverage-report:
+    desc: Show coverage report in browser.
+    cmds:
+      - go tool cover -html=coverage.txt
+
+  generate:
+    desc: Generate code using go generate.
+    cmds:
+      - go generate ./...
+
+  migrate:
+    silent: false
+    desc: |
+      Run migrations subcommand. Pass arguments to the task like this: 'task migrate -- arg1 arg2'.
+        Examples:
+          - task migrate -- up
+          - task migrate -- down
+          - task migrate -- create new_migration
+        If you need to change env-file, pass it as variable: 'task migrate ENV_FILE=./.env.test -- up'
+    cmds:
+      - cmd: |
+          if [ -z "{{.CLI_ARGS}}" ]; then
+            echo "ERROR: CLI_ARGS is empty or not set. Pass arguments to the task like this: task migrate -- arg1 arg2"
+            exit 1
+          fi
+        silent: true
+      - go run ./main.go migrate --env-file {{.ENV_FILE}} {{.CLI_ARGS}}

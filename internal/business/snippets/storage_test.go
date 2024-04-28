@@ -3,17 +3,18 @@ package snippets_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"sort"
 	"testing"
 	"time"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
-	_ "github.com/lib/pq" // import pg driver
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
+	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
 	"github.com/titusjaka/go-sample/migrations"
@@ -512,44 +513,40 @@ func TestPGStorage_Errors(t *testing.T) {
 }
 
 func initPGStorage(params connectionParams) (storage *snippets.PGStorage, stop stopFunc, err error) {
-	postgres := embeddedpostgres.NewDatabase(embeddedpostgres.DefaultConfig().
+	postgresInstance := embeddedpostgres.NewDatabase(embeddedpostgres.DefaultConfig().
 		Username(params.username).
 		Password(params.password).
 		Database(params.databaseName).
-		Version(embeddedpostgres.V13).
+		Version(embeddedpostgres.V16).
 		Port(params.port).
 		StartTimeout(params.timeout))
 
-	if err = postgres.Start(); err != nil {
+	if err = postgresInstance.Start(); err != nil {
 		return nil, nil, fmt.Errorf("failed to start PostgreSQL: %w", err)
 	}
 
 	defer func() {
 		// If any error happens, must stop PostgreSQL service
 		if err != nil {
-			stopErr := postgres.Stop()
+			stopErr := postgresInstance.Stop()
 			if stopErr != nil {
 				err = fmt.Errorf("failed to stop PostgreSQL: %w. Previous error: %s", stopErr, err.Error())
 			}
 		}
 	}()
 
-	databaseDSN := fmt.Sprintf(
-		"postgresql://%s:%s@localhost:%d/%s?sslmode=disable",
-		params.username,
-		params.password,
-		params.port,
-		params.databaseName,
-	)
-
-	db, err := sql.Open("postgres", databaseDSN)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open PostgreSQL connection: %w", err)
+	pgFlags := postgres.Flags{
+		Host:     "localhost",
+		Port:     params.port,
+		Username: params.username,
+		Password: params.password,
+		Database: params.databaseName,
+		TLSMode:  "disable",
 	}
 
-	err = db.Ping()
+	db, err := pgFlags.OpenStdSQLDB()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to open PostgreSQL connection: %w", err)
 	}
 
 	_, err = applyMigrations(context.Background(), db)
@@ -559,14 +556,10 @@ func initPGStorage(params connectionParams) (storage *snippets.PGStorage, stop s
 
 	stop = func() (err error) {
 		if closeErr := db.Close(); closeErr != nil {
-			err = fmt.Errorf("failed to close db connection: %w", closeErr)
+			err = errors.Join(err, fmt.Errorf("failed to close PostgreSQL connection: %w", closeErr))
 		}
-		if stopErr := postgres.Stop(); stopErr != nil {
-			var previousErrMessage string
-			if err != nil {
-				previousErrMessage = ": " + err.Error()
-			}
-			err = fmt.Errorf("failed to stop PostgreSQL: %w%s", stopErr, previousErrMessage)
+		if stopErr := postgresInstance.Stop(); stopErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to stop PostgreSQL: %w", stopErr))
 		}
 
 		return err

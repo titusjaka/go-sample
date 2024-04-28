@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/titusjaka/go-sample/commands/flags"
 	"github.com/titusjaka/go-sample/internal/infrastructure/log"
+	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
 	"github.com/titusjaka/go-sample/migrations"
 )
@@ -51,13 +51,13 @@ type CreateCmd struct {
 
 // UpCmd represents a CLI sub-command to apply all migrations to DB
 type UpCmd struct {
-	Postgres flags.PostgreSQL `kong:"embed"`
+	Postgres postgres.Flags `kong:"embed"`
 }
 
 // DownCmd represents a CLI sub-command to rollback a specified number of migrations
 type DownCmd struct {
-	Postgres flags.PostgreSQL `kong:"embed"`
-	Steps    int              `kong:"required,default='1',name=steps,help='Number of migrations to revert'"`
+	Postgres postgres.Flags `kong:"embed"`
+	Steps    int            `kong:"required,default='1',name=steps,help='Number of migrations to revert'"`
 }
 
 // ============================================================================

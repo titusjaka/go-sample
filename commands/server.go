@@ -18,11 +18,11 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/titusjaka/go-sample/commands/flags"
 	"github.com/titusjaka/go-sample/internal/business/snippets"
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
 	"github.com/titusjaka/go-sample/internal/infrastructure/kongflag"
 	"github.com/titusjaka/go-sample/internal/infrastructure/log"
+	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
 )
 
 // ErrStopped is returned when the server is gracefully stopped.
@@ -30,7 +30,7 @@ var ErrStopped = errors.New("stopped")
 
 // ServerCmd implements kong.Command for the main server command.
 type ServerCmd struct {
-	Postgres flags.PostgreSQL `kong:"embed"`
+	Postgres postgres.Flags `kong:"embed"`
 
 	Listen string `kong:"optional,default=':4040',group='HTTP Server',env=HTTP_LISTEN,help='HTTP network address'"`
 	Token  string `kong:"optional,env=API_TOKEN,group='HTTP Server',help='authentication token used for inter-service communication'"`

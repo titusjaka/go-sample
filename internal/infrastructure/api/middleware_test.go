@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,14 +16,9 @@ import (
 )
 
 func TestApi_NotFoundHandler(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockLogger := log.NewMockLogger(ctrl)
-
 	router := chi.NewRouter()
 	router.Use(render.SetContentType(render.ContentTypeJSON))
-	router.NotFound(api.NewNotFoundHandler(log.With(mockLogger, log.Field("fake", "fake"))))
+	router.NotFound(api.NewNotFoundHandler(log.NopLogger{}))
 	router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 		_, _ = w.Write([]byte("OK"))
 	})
@@ -33,7 +27,6 @@ func TestApi_NotFoundHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
-	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any())
 
 	router.ServeHTTP(recorder, request)
 	result := recorder.Result()
@@ -50,14 +43,9 @@ func TestApi_NotFoundHandler(t *testing.T) {
 }
 
 func TestApi_MethodNotAllowedHandler(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockLogger := log.NewMockLogger(ctrl)
-
 	router := chi.NewRouter()
 	router.Use(render.SetContentType(render.ContentTypeJSON))
-	router.MethodNotAllowed(api.NewMethodNotAllowedHandler(log.With(mockLogger, log.Field("fake", "fake"))))
+	router.MethodNotAllowed(api.NewMethodNotAllowedHandler(log.NopLogger{}))
 	router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 		_, _ = w.Write([]byte("OK"))
 	})
@@ -66,7 +54,6 @@ func TestApi_MethodNotAllowedHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
-	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any())
 
 	router.ServeHTTP(recorder, request)
 	result := recorder.Result()

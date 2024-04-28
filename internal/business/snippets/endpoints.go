@@ -9,7 +9,7 @@ import (
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
 )
 
-//go:generate mockgen -source=endpoints.go -destination ./mocks_service_test.go -package snippets_test -mock_names Service=MockService
+//go:generate go run go.uber.org/mock/mockgen -typed -source=endpoints.go -destination ./endpoints_mock_test.go -package snippets_test -mock_names Service=MockService
 
 // Service is used to manipulate data over snippets
 type Service interface {

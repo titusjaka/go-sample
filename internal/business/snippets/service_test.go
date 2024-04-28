@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
 	"github.com/titusjaka/go-sample/internal/infrastructure/log"
@@ -22,9 +22,8 @@ func TestSnippetService_Create(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 			now := time.Now().UTC()
@@ -62,9 +61,8 @@ func TestSnippetService_Create(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 			now := time.Now().In(time.FixedZone("CET", 60*60))
@@ -103,9 +101,8 @@ func TestSnippetService_Create(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockStorage := NewMockStorage(ctrl)
-		mockLogger := log.NewMockLogger(ctrl)
 
-		snippetService := snippets.NewService(mockStorage, mockLogger)
+		snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 		ctx := context.Background()
 
@@ -113,7 +110,6 @@ func TestSnippetService_Create(t *testing.T) {
 		expectedErr := errors.New("something wrong happen 😱")
 
 		mockStorage.EXPECT().Create(ctx, gomock.Any()).Return(expectedID, expectedErr)
-		mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 		_, svcErr := snippetService.Create(ctx, snippets.Snippet{})
 
@@ -129,9 +125,8 @@ func TestSnippetService_Get(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockStorage := NewMockStorage(ctrl)
-		mockLogger := log.NewMockLogger(ctrl)
 
-		snippetService := snippets.NewService(mockStorage, mockLogger)
+		snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 		ctx := context.Background()
 		now := time.Now().UTC()
@@ -165,15 +160,13 @@ func TestSnippetService_Get(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 			expectedErr := errors.New("failed to get")
 
 			mockStorage.EXPECT().Get(ctx, uint(200)).Return(snippets.Snippet{}, expectedErr)
-			mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 			gotSnippet, svcErr := snippetService.Get(ctx, 200)
 			require.NotNil(t, svcErr)
@@ -187,9 +180,8 @@ func TestSnippetService_Get(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 
@@ -211,9 +203,8 @@ func TestSnippetService_List(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 			now1 := time.Now().UTC()
@@ -264,9 +255,8 @@ func TestSnippetService_List(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 			now1 := time.Now().UTC()
@@ -317,9 +307,8 @@ func TestSnippetService_List(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 
@@ -351,9 +340,8 @@ func TestSnippetService_List(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 
@@ -369,7 +357,6 @@ func TestSnippetService_List(t *testing.T) {
 			}
 
 			mockStorage.EXPECT().Total(ctx).Return(uint(0), nil)
-			mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 			mockStorage.EXPECT().List(ctx, expectedPagination).Return([]snippets.Snippet{}, expectedErr)
 
 			actualSnippets, pagination, svcErr := snippetService.List(ctx, limit, offset)
@@ -385,9 +372,8 @@ func TestSnippetService_List(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 
@@ -402,7 +388,6 @@ func TestSnippetService_List(t *testing.T) {
 			}
 
 			mockStorage.EXPECT().Total(ctx).Return(uint(0), expectedErr)
-			mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 			actualSnippets, pagination, svcErr := snippetService.List(ctx, limit, offset)
 			require.NotNil(t, svcErr)
@@ -420,9 +405,8 @@ func TestSnippetService_SoftDelete(t *testing.T) {
 		defer ctrl.Finish()
 
 		mockStorage := NewMockStorage(ctrl)
-		mockLogger := log.NewMockLogger(ctrl)
 
-		snippetService := snippets.NewService(mockStorage, mockLogger)
+		snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 		ctx := context.Background()
 		expectedID := uint(200)
@@ -440,9 +424,8 @@ func TestSnippetService_SoftDelete(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 			expectedID := uint(200)
@@ -462,16 +445,14 @@ func TestSnippetService_SoftDelete(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStorage := NewMockStorage(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, mockLogger)
+			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
 
 			ctx := context.Background()
 			expectedID := uint(200)
 			expectedErr := errors.New("this is not suppose to happen 🚑")
 
 			mockStorage.EXPECT().SoftDelete(ctx, expectedID).Return(expectedErr)
-			mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 			svcErr := snippetService.SoftDelete(ctx, expectedID)
 

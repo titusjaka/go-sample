@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,15 +19,10 @@ func TestApi_InternalCommunication(t *testing.T) {
 	t.Run("Successfully authorized", func(t *testing.T) {
 		expectedToken := "12345"
 
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockLogger := log.NewMockLogger(ctrl)
-
 		router := chi.NewRouter()
 		router.Use(render.SetContentType(render.ContentTypeJSON))
 		router.Use(api.AuthorizationHeader)
-		router.Use(api.InternalCommunication(expectedToken, mockLogger))
+		router.Use(api.InternalCommunication(expectedToken, log.NopLogger{}))
 
 		router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 			actualToken, ok := req.Context().Value(api.AuthorizationHeaderKey).(string)
@@ -56,15 +50,10 @@ func TestApi_InternalCommunication(t *testing.T) {
 		t.Run("Empty auth header", func(t *testing.T) {
 			internalToken := "12345"
 
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockLogger := log.NewMockLogger(ctrl)
-
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Use(api.AuthorizationHeader)
-			router.Use(api.InternalCommunication(internalToken, mockLogger))
+			router.Use(api.InternalCommunication(internalToken, log.NopLogger{}))
 
 			router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 				_, _ = w.Write([]byte("OK"))
@@ -74,7 +63,6 @@ func TestApi_InternalCommunication(t *testing.T) {
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
-			mockLogger.EXPECT().Info(gomock.Any(), gomock.Any())
 
 			router.ServeHTTP(recorder, request)
 			result := recorder.Result()
@@ -94,15 +82,10 @@ func TestApi_InternalCommunication(t *testing.T) {
 			internalToken := "12345"
 			expectedToken := "wrong token"
 
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockLogger := log.NewMockLogger(ctrl)
-
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Use(api.AuthorizationHeader)
-			router.Use(api.InternalCommunication(internalToken, mockLogger))
+			router.Use(api.InternalCommunication(internalToken, log.NopLogger{}))
 
 			router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 				actualToken, ok := req.Context().Value(api.AuthorizationHeaderKey).(string)
@@ -116,7 +99,6 @@ func TestApi_InternalCommunication(t *testing.T) {
 			request.Header.Add("Authorization", "Bearer "+expectedToken)
 
 			recorder := httptest.NewRecorder()
-			mockLogger.EXPECT().Info(gomock.Any(), gomock.Any())
 
 			router.ServeHTTP(recorder, request)
 			result := recorder.Result()

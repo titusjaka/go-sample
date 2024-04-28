@@ -12,9 +12,9 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
@@ -38,7 +38,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				expectedPagination := service.Pagination{
 					Limit:       100,
@@ -48,7 +47,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					CurrentPage: 1,
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -82,7 +81,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				fakeTimeCreated := time.Date(2020, 10, 7, 12, 0, 0, 0, time.UTC)
 				fakeTimeExpires := time.Date(2050, 1, 1, 1, 1, 1, 0, time.UTC)
@@ -130,7 +128,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					},
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -166,7 +164,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				fakeTimeCreated := time.Date(2020, 10, 7, 12, 0, 0, 0, time.UTC)
 				fakeTimeExpires := time.Date(2050, 1, 1, 1, 1, 1, 0, time.UTC)
@@ -214,7 +211,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					},
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -252,7 +249,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				expectedPagination := service.Pagination{
 					Limit:       100,
@@ -267,7 +263,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.With(mockLogger))
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -297,17 +293,14 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.With(mockLogger))
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
 
 				server := httptest.NewServer(router)
 				defer server.Close()
-
-				mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 				client := server.Client()
 				resp, err := client.Get(server.URL + "/snippets?limit=-1")
@@ -333,7 +326,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockService := NewMockService(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
 			fakeTimeCreated := time.Date(2020, 10, 7, 12, 0, 0, 0, time.UTC)
 			fakeTimeExpires := time.Date(2050, 1, 1, 1, 1, 1, 0, time.UTC)
@@ -354,7 +346,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				ExpiresAt: fakeTimeExpires,
 			}
 
-			handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+			handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Mount("/snippets", handler)
@@ -385,7 +377,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				expectedID := uint(100)
 				expectedErrorMsg := "internal error"
@@ -394,7 +385,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -425,7 +416,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				expectedID := uint(100)
 				expectedErrorMsg := snippets.ErrNotFound.Error()
@@ -434,7 +424,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: snippets.ErrNotFound,
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -465,17 +455,14 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
 
 				server := httptest.NewServer(router)
 				defer server.Close()
-
-				mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 				client := server.Client()
 				resp, err := client.Get(server.URL + "/snippets/-1")
@@ -501,7 +488,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockService := NewMockService(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
 			fakeTimeCreated := time.Now().UTC()
 			fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
@@ -523,7 +509,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				ExpiresAt: fakeTimeExpires,
 			}
 
-			handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+			handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Mount("/snippets", handler)
@@ -565,7 +551,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				fakeTimeCreated := time.Now().UTC()
 				fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
@@ -577,7 +562,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -618,21 +603,18 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					defer ctrl.Finish()
 
 					mockService := NewMockService(ctrl)
-					mockLogger := log.NewMockLogger(ctrl)
 
 					fakeTimeCreated := time.Now().UTC()
 					fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
 					fakeTimeString := fakeTimeExpires.Format(time.RFC3339)
 
-					handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+					handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 					router := chi.NewRouter()
 					router.Use(render.SetContentType(render.ContentTypeJSON))
 					router.Mount("/snippets", handler)
 
 					server := httptest.NewServer(router)
 					defer server.Close()
-
-					mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 					client := server.Client()
 
@@ -664,13 +646,12 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					defer ctrl.Finish()
 
 					mockService := NewMockService(ctrl)
-					mockLogger := log.NewMockLogger(ctrl)
 
 					fakeTimeCreated := time.Now().UTC()
 					fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
 					fakeTimeString := fakeTimeExpires.Format(time.RFC1123Z)
 
-					handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+					handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 					router := chi.NewRouter()
 					router.Use(render.SetContentType(render.ContentTypeJSON))
 					router.Mount("/snippets", handler)
@@ -713,11 +694,10 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockService := NewMockService(ctrl)
-			mockLogger := log.NewMockLogger(ctrl)
 
 			expectedID := uint(100)
 
-			handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+			handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Mount("/snippets", handler)
@@ -749,7 +729,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				expectedID := uint(100)
 				expectedErrorMsg := "internal error"
@@ -758,7 +737,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -796,17 +775,14 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
-				handler := snippets.MakeSnippetsHandler(mockService, mockLogger)
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
 
 				server := httptest.NewServer(router)
 				defer server.Close()
-
-				mockLogger.EXPECT().Error(gomock.Any(), gomock.Any())
 
 				client := server.Client()
 				req, err := http.NewRequest(
@@ -836,7 +812,6 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				defer ctrl.Finish()
 
 				mockService := NewMockService(ctrl)
-				mockLogger := log.NewMockLogger(ctrl)
 
 				expectedID := uint(100)
 				expectedErrorMsg := snippets.ErrNotFound.Error()
@@ -845,7 +820,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: snippets.ErrNotFound,
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.With(mockLogger))
+				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)

@@ -18,7 +18,7 @@ import (
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
+	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
 )
 
@@ -47,7 +47,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					CurrentPage: 1,
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -128,7 +128,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					},
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -211,7 +211,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					},
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -263,7 +263,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -294,7 +294,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 
 				mockService := NewMockService(ctrl)
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -346,7 +346,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				ExpiresAt: fakeTimeExpires,
 			}
 
-			handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+			handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Mount("/snippets", handler)
@@ -385,7 +385,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -424,7 +424,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: snippets.ErrNotFound,
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -456,7 +456,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 
 				mockService := NewMockService(ctrl)
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -509,7 +509,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 				ExpiresAt: fakeTimeExpires,
 			}
 
-			handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+			handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Mount("/snippets", handler)
@@ -562,7 +562,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -608,7 +608,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
 					fakeTimeString := fakeTimeExpires.Format(time.RFC3339)
 
-					handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+					handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 					router := chi.NewRouter()
 					router.Use(render.SetContentType(render.ContentTypeJSON))
 					router.Mount("/snippets", handler)
@@ -651,7 +651,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
 					fakeTimeString := fakeTimeExpires.Format(time.RFC1123Z)
 
-					handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+					handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 					router := chi.NewRouter()
 					router.Use(render.SetContentType(render.ContentTypeJSON))
 					router.Mount("/snippets", handler)
@@ -697,7 +697,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 
 			expectedID := uint(100)
 
-			handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+			handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Mount("/snippets", handler)
@@ -737,7 +737,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: errors.New(expectedErrorMsg),
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -776,7 +776,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 
 				mockService := NewMockService(ctrl)
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)
@@ -820,7 +820,7 @@ func TestTransport_MakeSnippetsHandler(t *testing.T) {
 					Base: snippets.ErrNotFound,
 				}
 
-				handler := snippets.MakeSnippetsHandler(mockService, log.NopLogger{})
+				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
 				router := chi.NewRouter()
 				router.Use(render.SetContentType(render.ContentTypeJSON))
 				router.Mount("/snippets", handler)

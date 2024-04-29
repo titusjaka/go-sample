@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
+	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
 )
 
 func TestApi_InternalCommunication(t *testing.T) {
@@ -22,7 +22,7 @@ func TestApi_InternalCommunication(t *testing.T) {
 		router := chi.NewRouter()
 		router.Use(render.SetContentType(render.ContentTypeJSON))
 		router.Use(api.AuthorizationHeader)
-		router.Use(api.InternalCommunication(expectedToken, log.NopLogger{}))
+		router.Use(api.InternalCommunication(expectedToken, nopslog.NewNoplogger()))
 
 		router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 			actualToken, ok := req.Context().Value(api.AuthorizationHeaderKey).(string)
@@ -53,7 +53,7 @@ func TestApi_InternalCommunication(t *testing.T) {
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Use(api.AuthorizationHeader)
-			router.Use(api.InternalCommunication(internalToken, log.NopLogger{}))
+			router.Use(api.InternalCommunication(internalToken, nopslog.NewNoplogger()))
 
 			router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 				_, _ = w.Write([]byte("OK"))
@@ -85,7 +85,7 @@ func TestApi_InternalCommunication(t *testing.T) {
 			router := chi.NewRouter()
 			router.Use(render.SetContentType(render.ContentTypeJSON))
 			router.Use(api.AuthorizationHeader)
-			router.Use(api.InternalCommunication(internalToken, log.NopLogger{}))
+			router.Use(api.InternalCommunication(internalToken, nopslog.NewNoplogger()))
 
 			router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 				actualToken, ok := req.Context().Value(api.AuthorizationHeaderKey).(string)

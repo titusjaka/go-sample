@@ -3,9 +3,9 @@ package snippets
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
 )
 
@@ -23,11 +23,11 @@ type Storage interface {
 // SnippetService represents service struct. It holds storage and logger.
 type SnippetService struct {
 	storage Storage
-	logger  log.Logger
+	logger  *slog.Logger
 }
 
 // NewService returns new instance of SnippetService
-func NewService(storage Storage, logger log.Logger) *SnippetService {
+func NewService(storage Storage, logger *slog.Logger) *SnippetService {
 	return &SnippetService{
 		storage: storage,
 		logger:  logger,
@@ -46,7 +46,7 @@ func (s *SnippetService) Get(ctx context.Context, id uint) (Snippet, *service.Er
 			Base: ErrNotFound,
 		}
 	default:
-		s.logger.Error("failed to get a snippet", log.Field("err", err))
+		s.logger.Error("failed to get a snippet", slog.Any("err", err))
 		return Snippet{}, &service.Error{
 			Type: service.InternalError,
 			Base: fmt.Errorf("failed to list snippets: %w", err),
@@ -63,7 +63,7 @@ func (s *SnippetService) Create(ctx context.Context, snippet Snippet) (Snippet, 
 
 	id, err := s.storage.Create(ctx, snippet)
 	if err != nil {
-		s.logger.Error("failed to create snippet", log.Field("err", err))
+		s.logger.Error("failed to create snippet", slog.Any("err", err))
 		return Snippet{}, &service.Error{
 			Type: service.InternalError,
 			Base: fmt.Errorf("failed to create snippet: %w", err),
@@ -78,7 +78,7 @@ func (s *SnippetService) Create(ctx context.Context, snippet Snippet) (Snippet, 
 func (s *SnippetService) List(ctx context.Context, limit uint, offset uint) ([]Snippet, service.Pagination, *service.Error) {
 	snippetsCount, err := s.storage.Total(ctx)
 	if err != nil {
-		s.logger.Error("failed to query total amount of snippets", log.Field("err", err))
+		s.logger.Error("failed to query total amount of snippets", slog.Any("err", err))
 		return nil, service.Pagination{}, &service.Error{
 			Type: service.InternalError,
 			Base: fmt.Errorf("failed to query total amount of snippets: %w", err),
@@ -89,7 +89,7 @@ func (s *SnippetService) List(ctx context.Context, limit uint, offset uint) ([]S
 
 	snippets, err := s.storage.List(ctx, pagination)
 	if err != nil {
-		s.logger.Error("failed to list snippets", log.Field("err", err))
+		s.logger.Error("failed to list snippets", slog.Any("err", err))
 		return nil, pagination, &service.Error{
 			Type: service.InternalError,
 			Base: fmt.Errorf("failed to list snippets: %w", err),
@@ -112,8 +112,8 @@ func (s *SnippetService) SoftDelete(ctx context.Context, id uint) *service.Error
 	default:
 		s.logger.Error(
 			"failed to soft delete snippet",
-			log.Field("id", id),
-			log.Field("err", err),
+			slog.Uint64("id", uint64(id)),
+			slog.Any("err", err),
 		)
 		return &service.Error{
 			Type: service.InternalError,

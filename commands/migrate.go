@@ -7,6 +7,7 @@ import (
 	"github.com/titusjaka/go-sample/internal/infrastructure/log"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
+	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgtest"
 	"github.com/titusjaka/go-sample/migrations"
 )
 
@@ -38,6 +39,8 @@ type MigrateCmd struct {
 	Create CreateCmd `kong:"cmd,name=create,help='Create a new blank migration file. Pass a [name] as the first argument.'"`
 	Up     UpCmd     `kong:"cmd,name=up,default=1,help='Apply all database migrations.'"`
 	Down   DownCmd   `kong:"cmd,name=down,help='Rollback a [number] of migrations. Pass a [number] as the flag.'"`
+
+	TestDB InitTestDBCmd `kong:"cmd,name=init-test-db,help='Init test database template.'"`
 }
 
 // ============================================================================
@@ -58,6 +61,11 @@ type UpCmd struct {
 type DownCmd struct {
 	Postgres postgres.Flags `kong:"embed"`
 	Steps    int            `kong:"required,default='1',name=steps,help='Number of migrations to revert'"`
+}
+
+// InitTestDBCmd represents a CLI sub-command to create a new template database for testing
+type InitTestDBCmd struct {
+	Postgres pgtest.Flags `kong:"embed"`
 }
 
 // ============================================================================
@@ -123,6 +131,21 @@ func (c DownCmd) Run() error {
 	}
 
 	logger.Info("🤖 ➡ migration(s) reverted successfully", log.Field("reverted", reverted))
+
+	return nil
+}
+
+// Run (InitTestDBCmd) creates a new template database for testing
+func (c InitTestDBCmd) Run() error {
+	logger := log.New()
+
+	logger.Info("🧱 ➡ creating template database...")
+
+	if err := pgtest.CreateTemplateDatabase(c.Postgres, migrations.Dir); err != nil {
+		return fmt.Errorf("create template DB: %w", err)
+	}
+
+	logger.Info("🏠 ➡ template database created successfully", log.Field("name", c.Postgres.TestDatabaseTemplate))
 
 	return nil
 }

@@ -4,7 +4,6 @@ go 1.22
 
 require (
 	github.com/alecthomas/kong v0.9.0
-	github.com/fergusstrange/embedded-postgres v1.26.0
 	github.com/go-chi/chi v1.5.1
 	github.com/go-chi/cors v1.1.1
 	github.com/go-chi/render v1.0.1
@@ -29,9 +28,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/lib/pq v1.10.7 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/atomic v1.5.0 // indirect
 	go.uber.org/multierr v1.3.0 // indirect
 	go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee // indirect

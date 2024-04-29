@@ -95,6 +95,7 @@ tasks:
           - task migrate -- up
           - task migrate -- down
           - task migrate -- create new_migration
+          - task migrate -- init-test-db
         If you need to change env-file, pass it as variable: 'task migrate ENV_FILE=./.env.test -- up'
     cmds:
       - cmd: |
@@ -103,4 +104,11 @@ tasks:
             exit 1
           fi
         silent: true
-      - go run ./main.go migrate --env-file {{.ENV_FILE}} {{.CLI_ARGS}}
+      - go run ./main.go --env-file {{.ENV_FILE}} migrate {{.CLI_ARGS}}
+
+  init-test-db:
+    desc: Create test database template.
+    cmds:
+      - task: migrate
+        vars:
+          CLI_ARGS: init-test-db

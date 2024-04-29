@@ -1,15 +1,16 @@
 package snippets
 
 import (
+	"log/slog"
+
 	"github.com/go-chi/chi"
 	kithttp "github.com/go-kit/kit/transport/http"
 
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
 )
 
 // MakeSnippetsHandler initialize all endpoints for route /snippets
-func MakeSnippetsHandler(s Service, l log.Logger) chi.Router {
+func MakeSnippetsHandler(s Service, l *slog.Logger) chi.Router {
 	options := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(api.EncodeError),
 		kithttp.ServerErrorHandler(api.NewLogErrorHandler(l)),

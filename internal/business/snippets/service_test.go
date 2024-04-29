@@ -11,7 +11,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
+	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
 )
 
@@ -23,7 +23,7 @@ func TestSnippetService_Create(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 			now := time.Now().UTC()
@@ -62,7 +62,7 @@ func TestSnippetService_Create(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 			now := time.Now().In(time.FixedZone("CET", 60*60))
@@ -102,7 +102,7 @@ func TestSnippetService_Create(t *testing.T) {
 
 		mockStorage := NewMockStorage(ctrl)
 
-		snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+		snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 		ctx := context.Background()
 
@@ -126,7 +126,7 @@ func TestSnippetService_Get(t *testing.T) {
 
 		mockStorage := NewMockStorage(ctrl)
 
-		snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+		snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 		ctx := context.Background()
 		now := time.Now().UTC()
@@ -161,7 +161,7 @@ func TestSnippetService_Get(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 			expectedErr := errors.New("failed to get")
@@ -181,7 +181,7 @@ func TestSnippetService_Get(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 
@@ -204,7 +204,7 @@ func TestSnippetService_List(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 			now1 := time.Now().UTC()
@@ -256,7 +256,7 @@ func TestSnippetService_List(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 			now1 := time.Now().UTC()
@@ -308,7 +308,7 @@ func TestSnippetService_List(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 
@@ -341,7 +341,7 @@ func TestSnippetService_List(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 
@@ -373,7 +373,7 @@ func TestSnippetService_List(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 
@@ -406,7 +406,7 @@ func TestSnippetService_SoftDelete(t *testing.T) {
 
 		mockStorage := NewMockStorage(ctrl)
 
-		snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+		snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 		ctx := context.Background()
 		expectedID := uint(200)
@@ -425,7 +425,7 @@ func TestSnippetService_SoftDelete(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 			expectedID := uint(200)
@@ -446,7 +446,7 @@ func TestSnippetService_SoftDelete(t *testing.T) {
 
 			mockStorage := NewMockStorage(ctrl)
 
-			snippetService := snippets.NewService(mockStorage, log.NopLogger{})
+			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
 
 			ctx := context.Background()
 			expectedID := uint(200)

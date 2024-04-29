@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
+	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
 )
 
 func TestApi_NotFoundHandler(t *testing.T) {
 	router := chi.NewRouter()
 	router.Use(render.SetContentType(render.ContentTypeJSON))
-	router.NotFound(api.NewNotFoundHandler(log.NopLogger{}))
+	router.NotFound(api.NewNotFoundHandler(nopslog.NewNoplogger()))
 	router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 		_, _ = w.Write([]byte("OK"))
 	})
@@ -45,7 +45,7 @@ func TestApi_NotFoundHandler(t *testing.T) {
 func TestApi_MethodNotAllowedHandler(t *testing.T) {
 	router := chi.NewRouter()
 	router.Use(render.SetContentType(render.ContentTypeJSON))
-	router.MethodNotAllowed(api.NewMethodNotAllowedHandler(log.NopLogger{}))
+	router.MethodNotAllowed(api.NewMethodNotAllowedHandler(nopslog.NewNoplogger()))
 	router.Get("/", func(w http.ResponseWriter, req *http.Request) {
 		_, _ = w.Write([]byte("OK"))
 	})

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,10 +19,10 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/titusjaka/go-sample/commands/flags"
 	"github.com/titusjaka/go-sample/internal/business/snippets"
 	"github.com/titusjaka/go-sample/internal/infrastructure/api"
 	"github.com/titusjaka/go-sample/internal/infrastructure/kongflag"
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
 )
 
@@ -31,6 +32,7 @@ var ErrStopped = errors.New("stopped")
 // ServerCmd implements kong.Command for the main server command.
 type ServerCmd struct {
 	Postgres postgres.Flags `kong:"embed"`
+	Logger   flags.Logger   `kong:"embed"`
 
 	Listen string `kong:"optional,default=':4040',group='HTTP Server',env=HTTP_LISTEN,help='HTTP network address'"`
 	Token  string `kong:"optional,env=API_TOKEN,group='HTTP Server',help='authentication token used for inter-service communication'"`
@@ -40,15 +42,17 @@ type ServerCmd struct {
 func (c ServerCmd) Run(kVars kong.Vars) error {
 	gr, ctx := errgroup.WithContext(context.Background())
 
-	logger := log.New()
+	logger := c.Logger.Init()
 
 	logger.Info(
 		"⏳ starting service…",
-		log.Field("version", kVars[kongflag.ServiceVersion]),
-		log.Field("git_commit_sha", kVars[kongflag.GitCommitSHA]),
-		log.Field("git_branch", kVars[kongflag.GitBranch]),
-		log.Field("go_version", kVars[kongflag.GoVersion]),
-		log.Field("config", c),
+		slog.Group("service_info",
+			slog.String("version", kVars[kongflag.ServiceVersion]),
+			slog.String("git_commit_sha", kVars[kongflag.GitCommitSHA]),
+			slog.String("git_branch", kVars[kongflag.GitBranch]),
+			slog.String("go_version", kVars[kongflag.GoVersion]),
+		),
+		slog.Any("config", c),
 	)
 
 	// =========================================================================
@@ -61,7 +65,10 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 
 	defer func() {
 		if closeErr := db.Close(); closeErr != nil {
-			logger.Error("unable to close database connection", log.Field("err", closeErr))
+			logger.Error(
+				"unable to close database connection",
+				slog.Any("err", closeErr),
+			)
 		}
 	}()
 
@@ -70,6 +77,7 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 
 	migrationCmd := UpCmd{
 		Postgres: c.Postgres,
+		Logger:   c.Logger,
 	}
 
 	if err = migrationCmd.Run(); err != nil {
@@ -82,7 +90,9 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 	gr.Go(func() error {
 		return c.runHTTPServer(
 			ctx,
-			log.With(logger, log.Field("system", "http-server")),
+			logger.With(
+				slog.String("module", "http-server"),
+			),
 			db,
 		)
 	})
@@ -113,7 +123,7 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 }
 
 // runHTTPServer starts the HTTP server.
-func (c ServerCmd) runHTTPServer(ctx context.Context, logger log.Logger, db *sql.DB) error {
+func (c ServerCmd) runHTTPServer(ctx context.Context, logger *slog.Logger, db *sql.DB) error {
 	// =========================================================================
 	// Init Chi Router
 
@@ -150,7 +160,7 @@ func (c ServerCmd) runHTTPServer(ctx context.Context, logger log.Logger, db *sql
 	snippetStorage := snippets.NewPGStorage(db)
 	snippetService := snippets.NewService(
 		snippetStorage,
-		log.With(logger, log.Field("service", "snippets")),
+		logger.With(slog.String("service", "snippets")),
 	)
 	snippetRouter := snippets.MakeSnippetsHandler(snippetService, logger)
 
@@ -166,18 +176,10 @@ func (c ServerCmd) runHTTPServer(ctx context.Context, logger log.Logger, db *sql
 	// =========================================================================
 	// Start HTTP Server
 
-	errLogger, err := log.NewStdLogger(
-		log.With(logger, log.Field("sub-system", "http-error-logger")),
-		log.Error,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create std logger: %w", err)
-	}
-
 	server := http.Server{
 		Addr:              c.Listen,
 		Handler:           r,
-		ErrorLog:          errLogger,
+		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	errCh := make(chan error, 1)
@@ -186,7 +188,10 @@ func (c ServerCmd) runHTTPServer(ctx context.Context, logger log.Logger, db *sql
 		errCh <- server.ListenAndServe()
 	}()
 
-	logger.Info("👨‍💻 ➡ web server started", log.Field("listen-addr", c.Listen))
+	logger.Info("👨‍💻 ➡ web server started", slog.String(
+		"listen-addr",
+		c.Listen,
+	))
 
 	select {
 	case <-ctx.Done():

@@ -3,21 +3,20 @@ package api
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-kit/kit/transport"
 	kithttp "github.com/go-kit/kit/transport/http"
-
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
 )
 
 // LogErrorHandler is a transport error handler implementation which logs an error.
 type LogErrorHandler struct {
-	logger log.Logger
+	logger *slog.Logger
 }
 
 // NewLogErrorHandler returns a new log middleware for go-kit transport
-func NewLogErrorHandler(logger log.Logger) transport.ErrorHandler {
+func NewLogErrorHandler(logger *slog.Logger) transport.ErrorHandler {
 	return &LogErrorHandler{
 		logger: logger,
 	}
@@ -25,18 +24,18 @@ func NewLogErrorHandler(logger log.Logger) transport.ErrorHandler {
 
 // Handle implements go-kit ErrorHandler interface
 func (h *LogErrorHandler) Handle(_ context.Context, err error) {
-	h.logger.Error("error occurred", log.Field("err", err))
+	h.logger.Error("error occurred", slog.Any("err", err))
 }
 
 // NewNotFoundHandler returns http.HandlerFunc, that handles default 404 behavior
-func NewNotFoundHandler(logger log.Logger) http.HandlerFunc {
+func NewNotFoundHandler(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logError := func() {
 			logger.Info("Resource not found",
-				log.Field("method", r.Method),
-				log.Field("host", r.Host),
-				log.Field("uri", r.URL.RequestURI()),
-				log.Field("status", http.StatusNotFound),
+				slog.String("method", r.Method),
+				slog.String("host", r.Host),
+				slog.String("uri", r.URL.RequestURI()),
+				slog.Int("status", http.StatusNotFound),
 			)
 		}
 
@@ -51,14 +50,14 @@ func NewNotFoundHandler(logger log.Logger) http.HandlerFunc {
 }
 
 // NewMethodNotAllowedHandler returns http.HandlerFunc, that handles default 405 behavior
-func NewMethodNotAllowedHandler(logger log.Logger) http.HandlerFunc {
+func NewMethodNotAllowedHandler(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logError := func() {
 			logger.Info("Method not allowed",
-				log.Field("method", r.Method),
-				log.Field("host", r.Host),
-				log.Field("uri", r.URL.RequestURI()),
-				log.Field("status", http.StatusMethodNotAllowed),
+				slog.String("method", r.Method),
+				slog.String("host", r.Host),
+				slog.String("uri", r.URL.RequestURI()),
+				slog.Int("status", http.StatusMethodNotAllowed),
 			)
 		}
 

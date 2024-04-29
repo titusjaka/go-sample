@@ -3,8 +3,9 @@ package commands
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/log"
+	"github.com/titusjaka/go-sample/commands/flags"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgtest"
@@ -50,22 +51,28 @@ type MigrateCmd struct {
 type CreateCmd struct {
 	Directory string `kong:"default='./migrations',help='Directory to store migration files'"`
 	Name      string `kong:"arg,required,help='Migration name'"`
+
+	Logger flags.Logger `kong:"embed"`
 }
 
 // UpCmd represents a CLI sub-command to apply all migrations to DB
 type UpCmd struct {
 	Postgres postgres.Flags `kong:"embed"`
+	Logger   flags.Logger   `kong:"embed"`
 }
 
 // DownCmd represents a CLI sub-command to rollback a specified number of migrations
 type DownCmd struct {
 	Postgres postgres.Flags `kong:"embed"`
-	Steps    int            `kong:"required,default='1',name=steps,help='Number of migrations to revert'"`
+	Logger   flags.Logger   `kong:"embed"`
+
+	Steps int `kong:"required,default='1',name=steps,help='Number of migrations to revert'"`
 }
 
 // InitTestDBCmd represents a CLI sub-command to create a new template database for testing
 type InitTestDBCmd struct {
 	Postgres pgtest.Flags `kong:"embed"`
+	Logger   flags.Logger `kong:"embed"`
 }
 
 // ============================================================================
@@ -73,21 +80,21 @@ type InitTestDBCmd struct {
 
 // Run (CreateCmd) creates a new migration file
 func (c CreateCmd) Run() error {
-	logger := log.New()
+	logger := c.Logger.Init()
 
 	filename, err := pgmigrator.Create(c.Directory, c.Name)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("🧶 ➡ created new migration", log.Field("path", filename))
+	logger.Info("🧶 ➡ created new migration", slog.String("path", filename))
 
 	return nil
 }
 
 // Run (UpCmd) applies all migrations to DB
 func (c UpCmd) Run() error {
-	logger := log.New()
+	logger := c.Logger.Init()
 
 	db, err := c.Postgres.OpenStdSQLDB()
 	if err != nil {
@@ -96,7 +103,7 @@ func (c UpCmd) Run() error {
 
 	defer func() {
 		if closeErr := db.Close(); closeErr != nil {
-			logger.Error("close pg connection", log.Field("err", closeErr))
+			logger.Error("close pg connection", slog.Any("err", closeErr))
 		}
 	}()
 
@@ -105,14 +112,14 @@ func (c UpCmd) Run() error {
 		return fmt.Errorf("apply migrations: %w", err)
 	}
 
-	logger.Info("👟 ➡ migration(s) applied successfully", log.Field("applied", applied))
+	logger.Info("👟 ➡ migration(s) applied successfully", slog.Int("applied", applied))
 
 	return nil
 }
 
 // Run (DownCmd) reverts a specified number of migrations
 func (c DownCmd) Run() error {
-	logger := log.New()
+	logger := c.Logger.Init()
 
 	db, err := c.Postgres.OpenStdSQLDB()
 	if err != nil {
@@ -121,7 +128,7 @@ func (c DownCmd) Run() error {
 
 	defer func() {
 		if closeErr := db.Close(); closeErr != nil {
-			logger.Error("close pg connection", log.Field("err", closeErr))
+			logger.Error("close pg connection", slog.Any("err", closeErr))
 		}
 	}()
 
@@ -130,14 +137,14 @@ func (c DownCmd) Run() error {
 		return fmt.Errorf("revert migrations: %w", err)
 	}
 
-	logger.Info("🤖 ➡ migration(s) reverted successfully", log.Field("reverted", reverted))
+	logger.Info("🤖 ➡ migration(s) reverted successfully", slog.Int("reverted", reverted))
 
 	return nil
 }
 
 // Run (InitTestDBCmd) creates a new template database for testing
 func (c InitTestDBCmd) Run() error {
-	logger := log.New()
+	logger := c.Logger.Init()
 
 	logger.Info("🧱 ➡ creating template database...")
 
@@ -145,7 +152,7 @@ func (c InitTestDBCmd) Run() error {
 		return fmt.Errorf("create template DB: %w", err)
 	}
 
-	logger.Info("🏠 ➡ template database created successfully", log.Field("name", c.Postgres.TestDatabaseTemplate))
+	logger.Info("🏠 ➡ template database created successfully", slog.String("name", c.Postgres.TestDatabaseTemplate))
 
 	return nil
 }

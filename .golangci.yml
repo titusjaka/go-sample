@@ -283,6 +283,7 @@ linters:
 # TODO (titusjaka): enable when I get rid of gokit
 #    - contextcheck
 #    - dupl
+#    - sloglint
     - errname
     - exhaustive
     - funlen

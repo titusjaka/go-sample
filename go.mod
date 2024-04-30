@@ -9,7 +9,7 @@ require (
 	github.com/go-chi/render v1.0.3
 	github.com/go-kit/kit v0.10.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/gorilla/schema v1.2.0
+	github.com/gorilla/schema v1.3.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/rubenv/sql-migrate v1.6.1
 	github.com/stretchr/testify v1.9.0

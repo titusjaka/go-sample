@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/go-chi/render"
 )
 
 type authenticatorKey int
@@ -45,11 +45,14 @@ func InternalCommunication(token string, logger *slog.Logger) func(next http.Han
 					slog.Int("status", http.StatusUnauthorized),
 				)
 			}
+
 			if v, ok := r.Context().Value(AuthorizationHeaderKey).(string); !ok || v != token {
 				logError()
-				_ = kithttp.EncodeJSONResponse(context.Background(), w, ErrUnauthorized())
+
+				_ = render.Render(w, r, ErrUnauthorized())
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	}

@@ -1,97 +1,100 @@
-package snippets
+package snippets_test
 
 import (
-	"bytes"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/titusjaka/go-sample/internal/business/snippets"
+	"github.com/titusjaka/go-sample/internal/infrastructure/utils/testutils"
 )
 
-func Test_createSnippetRequest_Validate(t *testing.T) {
+func TestCreateSnippetRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	// Define time variables
 	now := time.Now().UTC()
 	monthAfter := now.Add(time.Hour * 24 * 30)
 	hourBefore := now.Add(-time.Hour)
 	twoYearsAfter := now.Add(time.Hour * 24 * 365 * 2)
 
 	tests := []struct {
-		name      string
-		Title     string
-		Content   string
-		ExpiresAt string
-		wantErr   bool
+		name    string
+		request snippets.CreateSnippetRequest
+		wantErr string
 	}{
 		{
-			name:      "Valid createSnippetRequest",
-			Title:     "Valid title",
-			Content:   "I want to break free!",
-			ExpiresAt: monthAfter.Format(time.RFC3339),
-			wantErr:   false,
+			name: "Valid CreateSnippetRequest",
+			request: snippets.CreateSnippetRequest{
+				Title:     "Valid title",
+				Content:   "I want to break free!",
+				ExpiresAt: monthAfter,
+			},
+			wantErr: "",
 		},
 		{
-			name:      "Expires At is too big",
-			Title:     "Valid title",
-			Content:   "I want to break free!",
-			ExpiresAt: twoYearsAfter.Format(time.RFC3339),
-			wantErr:   true,
+			name: "Invalid: expires_at is too big",
+			request: snippets.CreateSnippetRequest{
+				Title:     "Valid title",
+				Content:   "I want to break free!",
+				ExpiresAt: twoYearsAfter,
+			},
+			wantErr: "expires_at: must be a valid RFC3339 date <= now + 1 year.",
 		},
 		{
-			name:      "Expires At is too small",
-			Title:     "Valid title",
-			Content:   "I want to break free!",
-			ExpiresAt: hourBefore.Format(time.RFC3339),
-			wantErr:   true,
+			name: "Invalid: expires_at is too small",
+			request: snippets.CreateSnippetRequest{
+				Title:     "Valid title",
+				Content:   "I want to break free!",
+				ExpiresAt: hourBefore,
+			},
+			wantErr: "expires_at: must be a valid RFC3339 date >= now.",
 		},
 		{
-			name:      "Empty title",
-			Title:     "",
-			Content:   "I want to break free!",
-			ExpiresAt: monthAfter.Format(time.RFC3339),
-			wantErr:   true,
+			name: "Invalid: empty title",
+			request: snippets.CreateSnippetRequest{
+				Title:     "",
+				Content:   "I want to break free!",
+				ExpiresAt: monthAfter,
+			},
+			wantErr: "title: cannot be blank.",
 		},
 		{
-			name:      "Empty content",
-			Title:     "Valid title",
-			Content:   "",
-			ExpiresAt: monthAfter.Format(time.RFC3339),
-			wantErr:   true,
+			name: "Invalid: empty content",
+			request: snippets.CreateSnippetRequest{
+				Title:     "Valid title",
+				Content:   "",
+				ExpiresAt: monthAfter,
+			},
+			wantErr: "content: cannot be blank.",
 		},
 		{
-			name:      "Too long title",
-			Title:     generateLongString(101),
-			Content:   "Valid content",
-			ExpiresAt: monthAfter.Format(time.RFC3339),
-			wantErr:   true,
+			name: "Invalid: title is too long",
+			request: snippets.CreateSnippetRequest{
+				Title:     strings.Repeat("a", 101),
+				Content:   "Valid content",
+				ExpiresAt: monthAfter,
+			},
+			wantErr: "title: the length must be between 1 and 100.",
 		},
 		{
-			name:      "Too long content",
-			Title:     "Valid title",
-			Content:   generateLongString(10001),
-			ExpiresAt: monthAfter.Format(time.RFC3339),
-			wantErr:   true,
+			name: "Invalid: content is too long",
+			request: snippets.CreateSnippetRequest{
+				Title:     "Valid title",
+				Content:   strings.Repeat("a", 10001),
+				ExpiresAt: monthAfter,
+			},
+			wantErr: "content: the length must be between 1 and 10000.",
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
-			r := &createSnippetRequest{
-				Title:     tt.Title,
-				Content:   tt.Content,
-				ExpiresAt: tt.ExpiresAt,
-			}
-			err := r.Validate()
-			if tt.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
+			t.Parallel()
+
+			err := tt.request.Validate()
+			testutils.AssertError(t, tt.wantErr, err)
 		})
 	}
-}
-
-func generateLongString(length int) string {
-	buf := bytes.Buffer{}
-	for i := 0; i < length; i++ {
-		buf.WriteRune('a')
-	}
-	return buf.String()
 }

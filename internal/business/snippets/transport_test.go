@@ -1,857 +1,720 @@
 package snippets_test
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/gavv/httpexpect/v2"
 	"go.uber.org/mock/gomock"
 
 	"github.com/titusjaka/go-sample/internal/business/snippets"
-	"github.com/titusjaka/go-sample/internal/infrastructure/api"
 	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
 )
 
-type snippetResponse struct {
-	ID        uint      `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"created_at"`
-	ExpiresAt time.Time `json:"expires_at"`
-}
+func TestTransport_listSnippets(t *testing.T) {
+	t.Parallel()
 
-func TestTransport_MakeSnippetsHandler(t *testing.T) {
-	t.Run("List snippets", func(t *testing.T) {
-		t.Run("Successfully list snippets", func(t *testing.T) {
-			t.Run("Empty list", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
+	t.Run("Successfully list snippets", func(t *testing.T) {
+		t.Parallel()
 
-				mockService := NewMockService(ctrl)
+		t.Run("Empty list", func(t *testing.T) {
+			t.Parallel()
 
-				expectedPagination := service.Pagination{
-					Limit:       100,
-					Offset:      0,
-					Total:       0,
-					TotalPages:  1,
-					CurrentPage: 1,
-				}
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().List(gomock.Any(), uint(0), uint(0)).Return(nil, expectedPagination, nil)
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + "/snippets")
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListSnippetsResponse struct {
-					Snippets   []snippetResponse  `json:"snippets"`
-					Pagination service.Pagination `json:"pagination"`
-				}
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetsResponse)
-				require.NoError(t, err)
-				assert.Empty(t, actualListSnippetsResponse.Snippets)
-				assert.Equal(t, expectedPagination, actualListSnippetsResponse.Pagination)
-			})
-			t.Run("Without pagination", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-
-				mockService := NewMockService(ctrl)
-
-				fakeTimeCreated := time.Date(2020, 10, 7, 12, 0, 0, 0, time.UTC)
-				fakeTimeExpires := time.Date(2050, 1, 1, 1, 1, 1, 0, time.UTC)
-				expectedSnippets := []snippets.Snippet{
-					{
-						ID:        100,
-						Title:     "Snippet #100",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated,
-						UpdatedAt: fakeTimeCreated,
-						ExpiresAt: fakeTimeExpires,
-					},
-					{
-						ID:        1000,
-						Title:     "Snippet #1000",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated.Add(time.Hour),
-						UpdatedAt: fakeTimeCreated.Add(time.Hour),
-						ExpiresAt: fakeTimeExpires.Add(time.Hour),
-					},
-				}
-				limit := uint(0)
-				offset := uint(0)
-				expectedPagination := service.Pagination{
-					Limit:       100,
-					Offset:      0,
-					Total:       2,
-					TotalPages:  1,
-					CurrentPage: 1,
-				}
-				expectedSnippetsResponse := []snippetResponse{
-					{
-						ID:        100,
-						Title:     "Snippet #100",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated,
-						ExpiresAt: fakeTimeExpires,
-					},
-					{
-						ID:        1000,
-						Title:     "Snippet #1000",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated.Add(time.Hour),
-						ExpiresAt: fakeTimeExpires.Add(time.Hour),
-					},
-				}
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().List(gomock.Any(), limit, offset).Return(expectedSnippets, expectedPagination, nil)
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + "/snippets")
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListSnippetsResponse struct {
-					Snippets   []snippetResponse  `json:"snippets"`
-					Pagination service.Pagination `json:"pagination"`
-				}
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetsResponse)
-				require.NoError(t, err)
-				assert.NotEmpty(t, actualListSnippetsResponse.Snippets)
-				assert.Equal(t, len(actualListSnippetsResponse.Snippets), len(expectedSnippetsResponse))
-				assert.Equal(t, expectedPagination, actualListSnippetsResponse.Pagination)
-				assert.EqualValues(t, expectedSnippetsResponse, actualListSnippetsResponse.Snippets)
-			})
-			t.Run("With pagination", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-
-				mockService := NewMockService(ctrl)
-
-				fakeTimeCreated := time.Date(2020, 10, 7, 12, 0, 0, 0, time.UTC)
-				fakeTimeExpires := time.Date(2050, 1, 1, 1, 1, 1, 0, time.UTC)
-				expectedSnippets := []snippets.Snippet{
-					{
-						ID:        100,
-						Title:     "Snippet #100",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated,
-						UpdatedAt: fakeTimeCreated,
-						ExpiresAt: fakeTimeExpires,
-					},
-					{
-						ID:        1000,
-						Title:     "Snippet #1000",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated.Add(time.Hour),
-						UpdatedAt: fakeTimeCreated.Add(time.Hour),
-						ExpiresAt: fakeTimeExpires.Add(time.Hour),
-					},
-				}
-				limit := uint(100)
-				offset := uint(0)
-				expectedPagination := service.Pagination{
-					Limit:       100,
-					Offset:      0,
-					Total:       2,
-					TotalPages:  1,
-					CurrentPage: 1,
-				}
-				expectedSnippetsResponse := []snippetResponse{
-					{
-						ID:        100,
-						Title:     "Snippet #100",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated,
-						ExpiresAt: fakeTimeExpires,
-					},
-					{
-						ID:        1000,
-						Title:     "Snippet #1000",
-						Content:   "Very important text",
-						CreatedAt: fakeTimeCreated.Add(time.Hour),
-						ExpiresAt: fakeTimeExpires.Add(time.Hour),
-					},
-				}
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().List(gomock.Any(), limit, offset).Return(expectedSnippets, expectedPagination, nil)
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + fmt.Sprintf("/snippets?limit=%d&offset=%d", limit, offset))
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListSnippetsResponse struct {
-					Snippets   []snippetResponse  `json:"snippets"`
-					Pagination service.Pagination `json:"pagination"`
-				}
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetsResponse)
-				require.NoError(t, err)
-				assert.NotEmpty(t, actualListSnippetsResponse.Snippets)
-				assert.Equal(t, len(actualListSnippetsResponse.Snippets), len(expectedSnippetsResponse))
-				assert.Equal(t, expectedPagination, actualListSnippetsResponse.Pagination)
-				assert.EqualValues(t, expectedSnippetsResponse, actualListSnippetsResponse.Snippets)
-			})
-		})
-		t.Run("Failed to list snippets", func(t *testing.T) {
-			t.Run("Error error", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-
-				mockService := NewMockService(ctrl)
-
-				expectedPagination := service.Pagination{
-					Limit:       100,
-					Offset:      0,
-					Total:       0,
-					TotalPages:  1,
-					CurrentPage: 1,
-				}
-				expectedErrorMsg := "internal error"
-				expectedSvcErr := &service.Error{
-					Type: service.InternalError,
-					Base: errors.New(expectedErrorMsg),
-				}
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().List(gomock.Any(), uint(0), uint(0)).Return(nil, expectedPagination, expectedSvcErr)
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + "/snippets")
-				require.NoError(t, err)
-				require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListResponse api.ErrResponse
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListResponse)
-				require.NoError(t, err)
-				assert.Equal(t, actualListResponse.Error, expectedErrorMsg)
-			})
-			t.Run("Wrong limit", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-
-				mockService := NewMockService(ctrl)
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + "/snippets?limit=-1")
-				require.NoError(t, err)
-				require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListResponse api.ErrResponse
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListResponse)
-				require.NoError(t, err)
-				assert.NotEmpty(t, actualListResponse.Error)
-			})
-		})
-	})
-
-	t.Run("Get snippet by ID", func(t *testing.T) {
-		t.Run("Successfully get a snippet", func(t *testing.T) {
+			// ================================================
+			// Init mocks and service
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
+
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
+
+			// ================================================
+			// Init test data
+			pagination := service.Pagination{
+				Limit:       100,
+				Offset:      0,
+				Total:       0,
+				TotalPages:  1,
+				CurrentPage: 1,
+			}
+
+			// ================================================
+			// Describe mock calls
+			mockService.EXPECT().List(
+				gomock.Any(),
+				uint(0),
+				uint(0),
+			).Return(nil, pagination, nil)
+
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"pagination": pagination,
+			}
+
+			response := expect.GET("/").
+				Expect()
+
+			response.
+				Status(http.StatusOK).
+				JSON().Object().IsEqual(expected)
+		})
+
+		t.Run("Return list of snippets with pagination", func(t *testing.T) {
+			t.Parallel()
+
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
+
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
+
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
+
+			// ================================================
+			// Init test data
+			limit := uint(0)
+			offset := uint(0)
+
+			pagination := service.Pagination{
+				Limit:       100,
+				Offset:      0,
+				Total:       2,
+				TotalPages:  1,
+				CurrentPage: 1,
+			}
 
 			fakeTimeCreated := time.Date(2020, 10, 7, 12, 0, 0, 0, time.UTC)
 			fakeTimeExpires := time.Date(2050, 1, 1, 1, 1, 1, 0, time.UTC)
-			expectedID := uint(100)
-			expectedSnippet := snippets.Snippet{
-				ID:        expectedID,
-				Title:     "Snippet #100",
-				Content:   "Very important text",
-				CreatedAt: fakeTimeCreated,
-				UpdatedAt: fakeTimeCreated,
-				ExpiresAt: fakeTimeExpires,
+
+			listOfSnippets := []snippets.Snippet{
+				{
+					ID:        100,
+					Title:     "Snippet #100",
+					Content:   "Very important text",
+					CreatedAt: fakeTimeCreated,
+					UpdatedAt: fakeTimeCreated,
+					ExpiresAt: fakeTimeExpires,
+				},
+				{
+					ID:        1000,
+					Title:     "Snippet #1000",
+					Content:   "Very important text",
+					CreatedAt: fakeTimeCreated.Add(time.Hour),
+					UpdatedAt: fakeTimeCreated.Add(time.Hour),
+					ExpiresAt: fakeTimeExpires.Add(time.Hour),
+				},
 			}
-			expectedSnippetResponse := snippetResponse{
-				ID:        expectedID,
-				Title:     "Snippet #100",
-				Content:   "Very important text",
-				CreatedAt: fakeTimeCreated,
-				ExpiresAt: fakeTimeExpires,
+
+			// ================================================
+			// Describe mock calls
+			mockService.EXPECT().List(
+				gomock.Any(),
+				limit,
+				offset,
+			).Return(listOfSnippets, pagination, nil)
+
+			// ================================================
+			// Run test
+			expectedSnippetsResponse := []snippets.SnippetResponse{
+				{
+					ID:        listOfSnippets[0].ID,
+					Title:     listOfSnippets[0].Title,
+					Content:   listOfSnippets[0].Content,
+					CreatedAt: listOfSnippets[0].CreatedAt,
+					ExpiresAt: listOfSnippets[0].ExpiresAt,
+				},
+				{
+					ID:        listOfSnippets[1].ID,
+					Title:     listOfSnippets[1].Title,
+					Content:   listOfSnippets[1].Content,
+					CreatedAt: listOfSnippets[1].CreatedAt,
+					ExpiresAt: listOfSnippets[1].ExpiresAt,
+				},
 			}
 
-			handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-			router := chi.NewRouter()
-			router.Use(render.SetContentType(render.ContentTypeJSON))
-			router.Mount("/snippets", handler)
+			expected := map[string]any{
+				"snippets":   expectedSnippetsResponse,
+				"pagination": pagination,
+			}
 
-			server := httptest.NewServer(router)
-			defer server.Close()
+			response := expect.GET("/").
+				Expect()
 
-			mockService.EXPECT().Get(gomock.Any(), expectedID).Return(expectedSnippet, nil)
-
-			client := server.Client()
-			resp, err := client.Get(server.URL + fmt.Sprintf("/snippets/%d", expectedID))
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-			defer func() {
-				require.NoError(t, resp.Body.Close())
-			}()
-
-			var actualListSnippetResponse snippetResponse
-
-			err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-			require.NoError(t, err)
-			assert.EqualValues(t, expectedSnippetResponse, actualListSnippetResponse)
-		})
-		t.Run("Failed to get a snippet", func(t *testing.T) {
-			t.Run("Error error", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-
-				mockService := NewMockService(ctrl)
-
-				expectedID := uint(100)
-				expectedErrorMsg := "internal error"
-				expectedSvcErr := &service.Error{
-					Type: service.InternalError,
-					Base: errors.New(expectedErrorMsg),
-				}
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().Get(gomock.Any(), expectedID).Return(snippets.Snippet{}, expectedSvcErr)
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + fmt.Sprintf("/snippets/%d", expectedID))
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListSnippetResponse api.ErrResponse
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-				require.NoError(t, err)
-				assert.Equal(t, actualListSnippetResponse.Error, expectedErrorMsg)
-			})
-
-			t.Run("Not found", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-
-				mockService := NewMockService(ctrl)
-
-				expectedID := uint(100)
-				expectedErrorMsg := snippets.ErrNotFound.Error()
-				expectedSvcErr := &service.Error{
-					Type: service.NotFound,
-					Base: snippets.ErrNotFound,
-				}
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().Get(gomock.Any(), expectedID).Return(snippets.Snippet{}, expectedSvcErr)
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + fmt.Sprintf("/snippets/%d", expectedID))
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListSnippetResponse api.ErrResponse
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-				require.NoError(t, err)
-				assert.Equal(t, actualListSnippetResponse.Error, expectedErrorMsg)
-			})
-
-			t.Run("Wrong id param", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
-
-				mockService := NewMockService(ctrl)
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				client := server.Client()
-				resp, err := client.Get(server.URL + "/snippets/-1")
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListSnippetResponse api.ErrResponse
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-				require.NoError(t, err)
-				assert.NotEmpty(t, actualListSnippetResponse.Error)
-			})
+			response.
+				Status(http.StatusOK).
+				JSON().Object().IsEqual(expected)
 		})
 	})
 
-	t.Run("Create a new snippet", func(t *testing.T) {
-		t.Run("Successfully create a snippet", func(t *testing.T) {
+	t.Run("Failed to list snippets", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Service error", func(t *testing.T) {
+			t.Parallel()
+
+			// ================================================
+			// Init mocks and service
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
 
-			fakeTimeCreated := time.Now().UTC()
-			fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
-			fakeTimeString := fakeTimeExpires.Format(time.RFC3339)
-			expectedID := uint(100)
-			expectedSnippet := snippets.Snippet{
-				ID:        expectedID,
-				Title:     "Snippet #100",
-				Content:   "Very important text",
-				CreatedAt: fakeTimeCreated,
-				UpdatedAt: fakeTimeCreated,
-				ExpiresAt: fakeTimeExpires,
-			}
-			expectedSnippetResponse := snippetResponse{
-				ID:        expectedID,
-				Title:     "Snippet #100",
-				Content:   "Very important text",
-				CreatedAt: fakeTimeCreated,
-				ExpiresAt: fakeTimeExpires,
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
+
+			// ================================================
+			// Init test data
+			svcErr := &service.Error{
+				Type: service.InternalError,
+				Base: errors.New("internal error"),
 			}
 
-			handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-			router := chi.NewRouter()
-			router.Use(render.SetContentType(render.ContentTypeJSON))
-			router.Mount("/snippets", handler)
+			// ================================================
+			// Describe mock calls
+			mockService.EXPECT().List(
+				gomock.Any(),
+				uint(0),
+				uint(0),
+			).Return(nil, service.Pagination{}, svcErr)
 
-			server := httptest.NewServer(router)
-			defer server.Close()
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": "internal error",
+			}
 
-			mockService.EXPECT().Create(gomock.Any(), gomock.Any()).Return(expectedSnippet, nil)
+			response := expect.GET("/").
+				Expect()
 
-			client := server.Client()
-
-			// language=JSON
-			snippetJSON := fmt.Sprintf(`{"title": "Snippet #100", "content": "Very important text", "expires_at": "%s"}`,
-				fakeTimeString,
-			)
-
-			resp, err := client.Post(
-				server.URL+"/snippets",
-				"application/json",
-				bytes.NewReader([]byte(snippetJSON)),
-			)
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusCreated, resp.StatusCode)
-
-			defer func() {
-				require.NoError(t, resp.Body.Close())
-			}()
-
-			var actualListSnippetResponse snippetResponse
-
-			err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-			require.NoError(t, err)
-			assert.EqualValues(t, expectedSnippetResponse, actualListSnippetResponse)
+			response.
+				Status(http.StatusInternalServerError).
+				JSON().Object().IsEqual(expected)
 		})
 
-		t.Run("Failed to create a snippet", func(t *testing.T) {
-			t.Run("Error error", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
+		t.Run("Bad request", func(t *testing.T) {
+			t.Parallel()
 
-				mockService := NewMockService(ctrl)
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
 
-				fakeTimeCreated := time.Now().UTC()
-				fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
-				fakeTimeString := fakeTimeExpires.Format(time.RFC3339)
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
 
-				expectedErrorMsg := "internal error"
-				expectedSvcError := &service.Error{
-					Type: service.InternalError,
-					Base: errors.New(expectedErrorMsg),
-				}
-
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
-
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().Create(gomock.Any(), gomock.Any()).Return(snippets.Snippet{}, expectedSvcError)
-
-				client := server.Client()
-
-				// language=JSON
-				snippetJSON := fmt.Sprintf(`{"title": "Snippet #100", "content": "Very important text", "expires_at": "%s"}`,
-					fakeTimeString,
-				)
-
-				resp, err := client.Post(
-					server.URL+"/snippets",
-					"application/json",
-					bytes.NewReader([]byte(snippetJSON)),
-				)
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListResponse api.ErrResponse
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListResponse)
-				require.NoError(t, err)
-				assert.Equal(t, actualListResponse.Error, expectedErrorMsg)
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
 			})
-			t.Run("Bad request", func(t *testing.T) {
-				t.Run("Wrong JSON", func(t *testing.T) {
-					ctrl := gomock.NewController(t)
-					defer ctrl.Finish()
 
-					mockService := NewMockService(ctrl)
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": `schema: error converting value for "limit"`,
+			}
 
-					fakeTimeCreated := time.Now().UTC()
-					fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
-					fakeTimeString := fakeTimeExpires.Format(time.RFC3339)
+			response := expect.GET("/").
+				WithQuery("limit", "-1").
+				Expect()
 
-					handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-					router := chi.NewRouter()
-					router.Use(render.SetContentType(render.ContentTypeJSON))
-					router.Mount("/snippets", handler)
-
-					server := httptest.NewServer(router)
-					defer server.Close()
-
-					client := server.Client()
-
-					// language=JSON
-					snippetJSON := fmt.Sprintf(`{"title": 100, "content": "Very important text", "expires_at": "%s"}`,
-						fakeTimeString,
-					)
-
-					resp, err := client.Post(
-						server.URL+"/snippets",
-						"application/json",
-						bytes.NewReader([]byte(snippetJSON)),
-					)
-					require.NoError(t, err)
-					assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-					defer func() {
-						require.NoError(t, resp.Body.Close())
-					}()
-
-					var actualListSnippetResponse api.ErrResponse
-
-					err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-					require.NoError(t, err)
-					assert.NotEmpty(t, actualListSnippetResponse.Error)
-				})
-				t.Run("Wrong time format", func(t *testing.T) {
-					ctrl := gomock.NewController(t)
-					defer ctrl.Finish()
-
-					mockService := NewMockService(ctrl)
-
-					fakeTimeCreated := time.Now().UTC()
-					fakeTimeExpires := fakeTimeCreated.Add(time.Hour * 24 * 120) // 120 days after
-					fakeTimeString := fakeTimeExpires.Format(time.RFC1123Z)
-
-					handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-					router := chi.NewRouter()
-					router.Use(render.SetContentType(render.ContentTypeJSON))
-					router.Mount("/snippets", handler)
-
-					server := httptest.NewServer(router)
-					defer server.Close()
-
-					client := server.Client()
-
-					// language=JSON
-					snippetJSON := fmt.Sprintf(`{"title": "Snippet #100", "content": "Very important text", "expires_at": "%s"}`,
-						fakeTimeString,
-					)
-
-					resp, err := client.Post(
-						server.URL+"/snippets",
-						"application/json",
-						bytes.NewReader([]byte(snippetJSON)),
-					)
-					require.NoError(t, err)
-					assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-					defer func() {
-						require.NoError(t, resp.Body.Close())
-					}()
-
-					var actualListSnippetResponse api.ErrResponse
-
-					err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-					require.NoError(t, err)
-					assert.NotEmpty(t, actualListSnippetResponse.Error)
-				})
-			})
+			response.
+				Status(http.StatusBadRequest).
+				JSON().Object().IsEqual(expected)
 		})
 	})
+}
 
-	t.Run("Delete an existing snippet", func(t *testing.T) {
-		t.Run("Successfully delete a snippet", func(t *testing.T) {
+func TestTransport_getSnippet(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Successfully get snippet", func(t *testing.T) {
+		t.Parallel()
+
+		// ================================================
+		// Init mocks and service
+		ctrl := gomock.NewController(t)
+
+		mockService := NewMockService(ctrl)
+		transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+		handler := transport.Routes()
+
+		// ================================================
+		// Create httpexpect instance
+		expect := httpexpect.WithConfig(httpexpect.Config{
+			Client: &http.Client{
+				Transport: httpexpect.NewBinder(handler),
+			},
+			Reporter: httpexpect.NewAssertReporter(t),
+		})
+
+		// ================================================
+		// Init test data
+		id := uint(100)
+
+		fakeTimeCreated := time.Date(2020, 10, 7, 12, 0, 0, 0, time.UTC)
+		fakeTimeExpires := time.Date(2050, 1, 1, 1, 1, 1, 0, time.UTC)
+
+		snippet := snippets.Snippet{
+			ID:        id,
+			Title:     "Snippet #100",
+			Content:   "Very important text",
+			CreatedAt: fakeTimeCreated,
+			UpdatedAt: fakeTimeCreated,
+			ExpiresAt: fakeTimeExpires,
+		}
+
+		// ================================================
+		// Describe mock calls
+		mockService.EXPECT().Get(
+			gomock.Any(),
+			id,
+		).Return(snippet, nil)
+
+		// ================================================
+		// Run test
+		expectedSnippetResponse := snippets.SnippetResponse{
+			ID:        id,
+			Title:     "Snippet #100",
+			Content:   "Very important text",
+			CreatedAt: fakeTimeCreated,
+			ExpiresAt: fakeTimeExpires,
+		}
+
+		response := expect.GET("/{id}", id).
+			Expect()
+
+		response.
+			Status(http.StatusOK).
+			JSON().Object().IsEqual(expectedSnippetResponse)
+	})
+
+	t.Run("Failed to get snippet", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Service error", func(t *testing.T) {
+			t.Parallel()
+
+			// ================================================
+			// Init mocks and service
 			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 
 			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
 
-			expectedID := uint(100)
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
 
-			handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-			router := chi.NewRouter()
-			router.Use(render.SetContentType(render.ContentTypeJSON))
-			router.Mount("/snippets", handler)
+			// ================================================
+			// Init test data
+			svcErr := &service.Error{
+				Type: service.InternalError,
+				Base: errors.New("internal error"),
+			}
 
-			server := httptest.NewServer(router)
-			defer server.Close()
+			// ================================================
+			// Describe mock calls
+			mockService.EXPECT().Get(
+				gomock.Any(),
+				uint(1),
+			).Return(snippets.Snippet{}, svcErr)
 
-			mockService.EXPECT().SoftDelete(gomock.Any(), expectedID).Return(nil)
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": "internal error",
+			}
 
-			client := server.Client()
-			req, err := http.NewRequest(
-				http.MethodDelete,
-				fmt.Sprintf("%s/snippets/%d", server.URL, expectedID),
-				nil,
-			)
-			require.NoError(t, err)
+			response := expect.GET("/{id}", 1).
+				Expect()
 
-			resp, err := client.Do(req)
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusNoContent, resp.StatusCode)
-
-			defer func() {
-				require.NoError(t, resp.Body.Close())
-			}()
+			response.
+				Status(http.StatusInternalServerError).
+				JSON().Object().IsEqual(expected)
 		})
-		t.Run("Failed to delete a snippet", func(t *testing.T) {
-			t.Run("Error error", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
 
-				mockService := NewMockService(ctrl)
+		t.Run("Bad request", func(t *testing.T) {
+			t.Parallel()
 
-				expectedID := uint(100)
-				expectedErrorMsg := "internal error"
-				expectedSvcErr := &service.Error{
-					Type: service.InternalError,
-					Base: errors.New(expectedErrorMsg),
-				}
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
 
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
 
-				server := httptest.NewServer(router)
-				defer server.Close()
-
-				mockService.EXPECT().SoftDelete(gomock.Any(), expectedID).Return(expectedSvcErr)
-
-				client := server.Client()
-				req, err := http.NewRequest(
-					http.MethodDelete,
-					fmt.Sprintf("%s/snippets/%d", server.URL, expectedID),
-					nil,
-				)
-				require.NoError(t, err)
-
-				resp, err := client.Do(req)
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
-
-				var actualListSnippetResponse api.ErrResponse
-
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-				require.NoError(t, err)
-				assert.Equal(t, actualListSnippetResponse.Error, expectedErrorMsg)
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
 			})
 
-			t.Run("Bad request", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": `invalid id param: -1`,
+			}
 
-				mockService := NewMockService(ctrl)
+			response := expect.GET("/{id}", -1).
+				Expect()
 
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
+			response.
+				Status(http.StatusBadRequest).
+				JSON().Object().IsEqual(expected)
+		})
+	})
+}
 
-				server := httptest.NewServer(router)
-				defer server.Close()
+func TestTransport_createSnippet(t *testing.T) {
+	t.Parallel()
 
-				client := server.Client()
-				req, err := http.NewRequest(
-					http.MethodDelete,
-					fmt.Sprintf("%s/snippets/wrong", server.URL),
-					nil,
-				)
-				require.NoError(t, err)
+	t.Run("Successfully create snippet", func(t *testing.T) {
+		t.Parallel()
 
-				resp, err := client.Do(req)
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		// ================================================
+		// Init mocks and service
+		ctrl := gomock.NewController(t)
 
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
+		mockService := NewMockService(ctrl)
+		transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+		handler := transport.Routes()
 
-				var actualListSnippetResponse api.ErrResponse
+		// ================================================
+		// Create httpexpect instance
+		expect := httpexpect.WithConfig(httpexpect.Config{
+			Client: &http.Client{
+				Transport: httpexpect.NewBinder(handler),
+			},
+			Reporter: httpexpect.NewAssertReporter(t),
+		})
 
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-				require.NoError(t, err)
-				assert.NotEmpty(t, actualListSnippetResponse.Error)
+		// ================================================
+		// Init test data
+		createSnippetRequest := snippets.CreateSnippetRequest{
+			Title:     "Snippet #100",
+			Content:   "Very important text",
+			ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 120).Truncate(time.Second),
+		}
+
+		snippetToCreate := snippets.Snippet{
+			Title:     createSnippetRequest.Title,
+			Content:   createSnippetRequest.Content,
+			ExpiresAt: createSnippetRequest.ExpiresAt,
+		}
+
+		createdSnippet := snippets.Snippet{
+			ID:        100,
+			Title:     createSnippetRequest.Title,
+			Content:   createSnippetRequest.Content,
+			CreatedAt: time.Now().UTC().Truncate(time.Second),
+			UpdatedAt: time.Now().UTC().Truncate(time.Second),
+			ExpiresAt: createSnippetRequest.ExpiresAt,
+		}
+
+		// ================================================
+		// Describe mock calls
+		mockService.EXPECT().Create(
+			gomock.Any(),
+			snippetToCreate,
+		).Return(createdSnippet, nil)
+
+		// ================================================
+		// Run test
+		expectedSnippetResponse := snippets.SnippetResponse{
+			ID:        createdSnippet.ID,
+			Title:     createdSnippet.Title,
+			Content:   createdSnippet.Content,
+			CreatedAt: createdSnippet.CreatedAt,
+			ExpiresAt: createdSnippet.ExpiresAt,
+		}
+
+		response := expect.POST("/").
+			WithJSON(createSnippetRequest).
+			Expect()
+
+		response.
+			Status(http.StatusOK).
+			JSON().Object().IsEqual(expectedSnippetResponse)
+	})
+
+	t.Run("Failed to create snippet", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Service error", func(t *testing.T) {
+			t.Parallel()
+
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
+
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
+
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
 			})
 
-			t.Run("Not found", func(t *testing.T) {
-				ctrl := gomock.NewController(t)
-				defer ctrl.Finish()
+			// ================================================
+			// Init test data
+			createSnippetRequest := snippets.CreateSnippetRequest{
+				Title:     "Snippet #100",
+				Content:   "Very important text",
+				ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 120).Truncate(time.Second),
+			}
 
-				mockService := NewMockService(ctrl)
+			snippetToCreate := snippets.Snippet{
+				Title:     createSnippetRequest.Title,
+				Content:   createSnippetRequest.Content,
+				ExpiresAt: createSnippetRequest.ExpiresAt,
+			}
 
-				expectedID := uint(100)
-				expectedErrorMsg := snippets.ErrNotFound.Error()
-				expectedSvcErr := &service.Error{
-					Type: service.NotFound,
-					Base: snippets.ErrNotFound,
-				}
+			svcErr := &service.Error{
+				Type: service.InternalError,
+				Base: errors.New("internal error"),
+			}
 
-				handler := snippets.MakeSnippetsHandler(mockService, nopslog.NewNoplogger())
-				router := chi.NewRouter()
-				router.Use(render.SetContentType(render.ContentTypeJSON))
-				router.Mount("/snippets", handler)
+			// ================================================
+			// Describe mock calls
+			mockService.EXPECT().Create(
+				gomock.Any(),
+				snippetToCreate,
+			).Return(snippets.Snippet{}, svcErr)
 
-				server := httptest.NewServer(router)
-				defer server.Close()
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": "internal error",
+			}
 
-				mockService.EXPECT().SoftDelete(gomock.Any(), expectedID).Return(expectedSvcErr)
+			response := expect.POST("/").
+				WithJSON(createSnippetRequest).
+				Expect()
 
-				client := server.Client()
-				req, err := http.NewRequest(
-					http.MethodDelete,
-					fmt.Sprintf("%s/snippets/%d", server.URL, expectedID),
-					nil,
-				)
-				require.NoError(t, err)
+			response.
+				Status(http.StatusInternalServerError).
+				JSON().Object().IsEqual(expected)
+		})
 
-				resp, err := client.Do(req)
-				require.NoError(t, err)
-				assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		t.Run("Bad request", func(t *testing.T) {
+			t.Parallel()
 
-				defer func() {
-					require.NoError(t, resp.Body.Close())
-				}()
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
 
-				var actualListSnippetResponse api.ErrResponse
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
 
-				err = json.NewDecoder(resp.Body).Decode(&actualListSnippetResponse)
-				require.NoError(t, err)
-				assert.Equal(t, actualListSnippetResponse.Error, expectedErrorMsg)
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
 			})
+
+			// ================================================
+			// Init test data
+			createSnippetRequest := snippets.CreateSnippetRequest{
+				Title:     "",
+				Content:   "Very important text",
+				ExpiresAt: time.Now().Add(time.Hour * 24 * 120).Truncate(time.Second),
+			}
+
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": `title: cannot be blank.`,
+			}
+
+			response := expect.POST("/").
+				WithJSON(createSnippetRequest).
+				Expect()
+
+			response.
+				Status(http.StatusBadRequest).
+				JSON().Object().IsEqual(expected)
+		})
+	})
+}
+
+func TestTransport_deleteSnippet(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Successfully delete snippet", func(t *testing.T) {
+		t.Parallel()
+
+		// ================================================
+		// Init mocks and service
+		ctrl := gomock.NewController(t)
+
+		mockService := NewMockService(ctrl)
+		transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+		handler := transport.Routes()
+
+		// ================================================
+		// Create httpexpect instance
+		expect := httpexpect.WithConfig(httpexpect.Config{
+			Client: &http.Client{
+				Transport: httpexpect.NewBinder(handler),
+			},
+			Reporter: httpexpect.NewAssertReporter(t),
+		})
+
+		// ================================================
+		// Init test data
+		id := uint(100)
+
+		// ================================================
+		// Describe mock calls
+		mockService.EXPECT().SoftDelete(
+			gomock.Any(),
+			id,
+		).Return(nil)
+
+		// ================================================
+		// Run test
+		response := expect.DELETE("/{id}", id).
+			Expect()
+
+		response.
+			Status(http.StatusNoContent)
+	})
+
+	t.Run("Failed to delete snippet", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Service error", func(t *testing.T) {
+			t.Parallel()
+
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
+
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
+
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
+
+			// ================================================
+			// Init test data
+			svcErr := &service.Error{
+				Type: service.InternalError,
+				Base: errors.New("internal error"),
+			}
+
+			// ================================================
+			// Describe mock calls
+			mockService.EXPECT().SoftDelete(
+				gomock.Any(),
+				uint(1),
+			).Return(svcErr)
+
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": "internal error",
+			}
+
+			response := expect.DELETE("/{id}", 1).
+				Expect()
+
+			response.
+				Status(http.StatusInternalServerError).
+				JSON().Object().IsEqual(expected)
+		})
+
+		t.Run("Bad request", func(t *testing.T) {
+			t.Parallel()
+
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
+
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
+
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
+
+			// ================================================
+			// Run test
+			expected := map[string]any{
+				"error": `invalid id param: -1`,
+			}
+
+			response := expect.GET("/{id}", -1).
+				Expect()
+
+			response.
+				Status(http.StatusBadRequest).
+				JSON().Object().IsEqual(expected)
 		})
 	})
 }

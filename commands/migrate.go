@@ -61,7 +61,7 @@ type UpCmd struct {
 	Logger   flags.Logger   `kong:"embed"`
 }
 
-// DownCmd represents a CLI sub-command to rollback a specified number of migrations
+// DownCmd represents a CLI sub-command to roll back a specified number of migrations
 type DownCmd struct {
 	Postgres postgres.Flags `kong:"embed"`
 	Logger   flags.Logger   `kong:"embed"`

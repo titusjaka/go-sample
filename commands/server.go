@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"golang.org/x/sync/errgroup"
@@ -162,7 +162,7 @@ func (c ServerCmd) runHTTPServer(ctx context.Context, logger *slog.Logger, db *s
 		snippetStorage,
 		logger.With(slog.String("service", "snippets")),
 	)
-	snippetRouter := snippets.MakeSnippetsHandler(snippetService, logger)
+	snippetTransport := snippets.NewTransport(snippetService, logger)
 
 	// =========================================================================
 	// Mount API Routes
@@ -170,7 +170,7 @@ func (c ServerCmd) runHTTPServer(ctx context.Context, logger *slog.Logger, db *s
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(api.AuthorizationHeader)
 		r.Use(api.InternalCommunication(c.Token, logger))
-		r.Mount("/snippets", snippetRouter)
+		r.Mount("/snippets", snippetTransport.Routes())
 	})
 
 	// =========================================================================

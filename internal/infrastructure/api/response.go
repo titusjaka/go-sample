@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/render"
+
 	"github.com/titusjaka/go-sample/internal/infrastructure/service"
 )
 
@@ -14,9 +16,14 @@ type ErrResponse struct {
 }
 
 // StatusCode returns an HTTP status code.
-// It implements kithttp.StatusCoder interface
 func (e *ErrResponse) StatusCode() int {
 	return e.statusCode
+}
+
+// Render renders response payloads.
+func (e *ErrResponse) Render(_ http.ResponseWriter, r *http.Request) error {
+	render.Status(r, e.statusCode)
+	return nil
 }
 
 // ErrBadRequest handler returns the pre-defined 400 schema.

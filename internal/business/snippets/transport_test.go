@@ -436,7 +436,13 @@ func TestTransport_createSnippet(t *testing.T) {
 		createSnippetRequest := snippets.CreateSnippetRequest{
 			Title:     "Snippet #100",
 			Content:   "Very important text",
-			ExpiresAt: time.Now().Add(time.Hour * 24 * 120).Truncate(time.Second),
+			ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 120).Truncate(time.Second),
+		}
+
+		snippetToCreate := snippets.Snippet{
+			Title:     createSnippetRequest.Title,
+			Content:   createSnippetRequest.Content,
+			ExpiresAt: createSnippetRequest.ExpiresAt,
 		}
 
 		createdSnippet := snippets.Snippet{
@@ -452,11 +458,7 @@ func TestTransport_createSnippet(t *testing.T) {
 		// Describe mock calls
 		mockService.EXPECT().Create(
 			gomock.Any(),
-			snippets.Snippet{
-				Title:     createSnippetRequest.Title,
-				Content:   createSnippetRequest.Content,
-				ExpiresAt: createSnippetRequest.ExpiresAt,
-			},
+			snippetToCreate,
 		).Return(createdSnippet, nil)
 
 		// ================================================
@@ -506,7 +508,13 @@ func TestTransport_createSnippet(t *testing.T) {
 			createSnippetRequest := snippets.CreateSnippetRequest{
 				Title:     "Snippet #100",
 				Content:   "Very important text",
-				ExpiresAt: time.Now().Add(time.Hour * 24 * 120).Truncate(time.Second),
+				ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 120).Truncate(time.Second),
+			}
+
+			snippetToCreate := snippets.Snippet{
+				Title:     createSnippetRequest.Title,
+				Content:   createSnippetRequest.Content,
+				ExpiresAt: createSnippetRequest.ExpiresAt,
 			}
 
 			svcErr := &service.Error{
@@ -518,11 +526,7 @@ func TestTransport_createSnippet(t *testing.T) {
 			// Describe mock calls
 			mockService.EXPECT().Create(
 				gomock.Any(),
-				snippets.Snippet{
-					Title:     createSnippetRequest.Title,
-					Content:   createSnippetRequest.Content,
-					ExpiresAt: createSnippetRequest.ExpiresAt,
-				},
+				snippetToCreate,
 			).Return(snippets.Snippet{}, svcErr)
 
 			// ================================================

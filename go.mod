@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/alecthomas/kong v0.9.0
-	github.com/go-chi/chi v1.5.1
+	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-chi/cors v1.1.1
 	github.com/go-chi/render v1.0.1
 	github.com/go-kit/kit v0.10.0

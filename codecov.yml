@@ -1,0 +1,6 @@
+ignore:
+  - "commands/" # ignore commands directory, since it only contains CLI commands
+  - "internal/infrastructure/kongflag/" # ignore kongflag package, since it contains helper functions for CLI commands
+  - "internal/infrastructure/postgres/pgtest/create.go" # this file contains a helper function for test initialization
+  - "internal/infrastructure/postgres/pgmigrator" # ignore pgmigrator package, since it contains helper functions for database migrations
+  - "internal/infrastructure/nopslog" # ignore nopslog package, since it contains helper functions for logging in tests

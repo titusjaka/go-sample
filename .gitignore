@@ -4,3 +4,4 @@ tags
 vendor
 .DS_Store
 .env
+/coverage.txt

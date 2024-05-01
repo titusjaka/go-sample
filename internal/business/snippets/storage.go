@@ -45,10 +45,10 @@ func (pg *PGStorage) Get(ctx context.Context, id uint) (Snippet, error) {
 		&snippet.CreatedAt,
 		&snippet.UpdatedAt,
 		&snippet.ExpiresAt,
-	); err {
-	case nil:
+	); {
+	case err == nil:
 		return snippet, nil
-	case sql.ErrNoRows:
+	case errors.Is(err, sql.ErrNoRows):
 		return Snippet{}, ErrNotFound
 	default:
 		return Snippet{}, fmt.Errorf("failed to scan snippet: %w", err)
@@ -117,11 +117,9 @@ func (pg *PGStorage) List(ctx context.Context, pagination service.Pagination) ([
 		ctx,
 		fmt.Sprintf(query, paginationExpression),
 	)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		break
-	case sql.ErrNoRows:
-		return []Snippet{}, nil
 	default:
 		return nil, fmt.Errorf("failed to list snippets: %w", err)
 	}

@@ -26,6 +26,7 @@ func TestInitTestDatabase(t *testing.T) {
 	conn := pgtest.InitTestDatabase(
 		t,
 		pgtest.WithFlags(flags),
+		pgtest.WithConfigFiles(envFile),
 		pgtest.WithApplyMigrations(testdata.Migrations),
 	)
 

@@ -2,6 +2,7 @@ package snippets
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -24,23 +25,31 @@ type Storage interface {
 type SnippetService struct {
 	storage Storage
 	logger  *slog.Logger
+
+	now func() time.Time
 }
 
 // NewService returns new instance of SnippetService
-func NewService(storage Storage, logger *slog.Logger) *SnippetService {
+func NewService(
+	storage Storage,
+	logger *slog.Logger,
+	nowFunc func() time.Time,
+) *SnippetService {
 	return &SnippetService{
 		storage: storage,
 		logger:  logger,
+
+		now: nowFunc,
 	}
 }
 
 // Get returns a single snippet
 func (s *SnippetService) Get(ctx context.Context, id uint) (Snippet, *service.Error) {
 	snippet, err := s.storage.Get(ctx, id)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		return snippet, nil
-	case ErrNotFound:
+	case errors.Is(err, ErrNotFound):
 		return Snippet{}, &service.Error{
 			Type: service.NotFound,
 			Base: ErrNotFound,
@@ -56,7 +65,7 @@ func (s *SnippetService) Get(ctx context.Context, id uint) (Snippet, *service.Er
 
 // Create creates a single snippet
 func (s *SnippetService) Create(ctx context.Context, snippet Snippet) (Snippet, *service.Error) {
-	createdAt := time.Now().UTC()
+	createdAt := s.now()
 	snippet.CreatedAt = createdAt
 	snippet.UpdatedAt = createdAt
 	snippet.ExpiresAt = snippet.ExpiresAt.UTC()
@@ -101,10 +110,10 @@ func (s *SnippetService) List(ctx context.Context, limit uint, offset uint) ([]S
 
 // SoftDelete mark a single snippet as deleted
 func (s *SnippetService) SoftDelete(ctx context.Context, id uint) *service.Error {
-	switch err := s.storage.SoftDelete(ctx, id); err {
-	case nil:
+	switch err := s.storage.SoftDelete(ctx, id); {
+	case err == nil:
 		return nil
-	case ErrNotFound:
+	case errors.Is(err, ErrNotFound):
 		return &service.Error{
 			Type: service.NotFound,
 			Base: ErrNotFound,

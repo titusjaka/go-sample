@@ -68,8 +68,6 @@ jobs:
         run: task init-test-db
       - name: Run tests
         run: task test
-      - name: Run coverage
-        run: task coverage
 
   coverage:
     runs-on: ubuntu-latest

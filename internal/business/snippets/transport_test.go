@@ -544,7 +544,39 @@ func TestTransport_createSnippet(t *testing.T) {
 				JSON().Object().IsEqual(expected)
 		})
 
-		t.Run("Bad request", func(t *testing.T) {
+		t.Run("Bad request: decode error", func(t *testing.T) {
+			t.Parallel()
+
+			// ================================================
+			// Init mocks and service
+			ctrl := gomock.NewController(t)
+
+			mockService := NewMockService(ctrl)
+			transport := snippets.NewTransport(mockService, nopslog.NewNoplogger())
+			handler := transport.Routes()
+
+			// ================================================
+			// Create httpexpect instance
+			expect := httpexpect.WithConfig(httpexpect.Config{
+				Client: &http.Client{
+					Transport: httpexpect.NewBinder(handler),
+				},
+				Reporter: httpexpect.NewAssertReporter(t),
+			})
+
+			// ================================================
+			// Run test
+			response := expect.POST("/").
+				WithJSON(map[string]any{
+					"title": 1,
+				}).
+				Expect()
+
+			response.
+				Status(http.StatusBadRequest)
+		})
+
+		t.Run("Bad request: validation error", func(t *testing.T) {
 			t.Parallel()
 
 			// ================================================
@@ -705,16 +737,11 @@ func TestTransport_deleteSnippet(t *testing.T) {
 
 			// ================================================
 			// Run test
-			expected := map[string]any{
-				"error": `invalid id param: -1`,
-			}
-
-			response := expect.GET("/{id}", -1).
+			response := expect.DELETE("/{id}", "o").
 				Expect()
 
 			response.
-				Status(http.StatusBadRequest).
-				JSON().Object().IsEqual(expected)
+				Status(http.StatusBadRequest)
 		})
 	})
 }

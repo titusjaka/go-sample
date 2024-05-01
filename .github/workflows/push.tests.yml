@@ -68,22 +68,5 @@ jobs:
         run: task init-test-db
       - name: Run tests
         run: task test
-
-# TODO: Enable coverage
-#  coverage:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 2
-#      - uses: actions/setup-go@v5
-#        with:
-#          go-version: '1.22'
-#      - name: Install Task
-#        uses: arduino/setup-task@v2
-#        with:
-#          version: 3.x
-#      - name: Run coverage
-#        run: task coverage
-#      - name: Upload coverage to Codecov
-#        run: bash <(curl -s https://codecov.io/bash)
+      - name: Run coverage
+        run: task coverage

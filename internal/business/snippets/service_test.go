@@ -16,449 +16,579 @@ import (
 )
 
 func TestSnippetService_Create(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Successfully create a new snippet", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("All times in UTC", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
-			now := time.Now().UTC()
-			expiresAt := now.Add(time.Hour * 24)
+			ctrl := gomock.NewController(t)
 
-			expectedID := uint(200)
-			expectedResult := snippets.Snippet{
-				ID:        expectedID,
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			fakeNow := time.Now().UTC()
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return fakeNow },
+			)
+
+			// ===============================================
+			// Init test data
+			expiresAt := fakeNow.Add(time.Hour * 24)
+
+			snippetToCreate := snippets.Snippet{
 				Title:     "Best snippet ever",
 				Content:   "Some text here…",
-				CreatedAt: now,
-				UpdatedAt: now,
 				ExpiresAt: expiresAt,
 			}
 
-			mockStorage.EXPECT().Create(ctx, gomock.Any()).Return(expectedID, nil)
+			snippetPassedToStorage := snippets.Snippet{
+				Title:     snippetToCreate.Title,
+				Content:   snippetToCreate.Content,
+				CreatedAt: fakeNow,
+				UpdatedAt: fakeNow,
+				ExpiresAt: expiresAt,
+			}
 
-			gotSnippet, svcErr := snippetService.Create(ctx, snippets.Snippet{
-				Title:     expectedResult.Title,
-				Content:   expectedResult.Content,
-				ExpiresAt: expectedResult.ExpiresAt,
-			})
+			snippetID := uint(200)
+
+			// ===============================================
+			// Describe Mock Calls
+			mockStorage.EXPECT().Create(ctx, snippetPassedToStorage).Return(snippetID, nil)
+
+			// ===============================================
+			// Run Test
+			expectedSnippet := snippetPassedToStorage
+			expectedSnippet.ID = snippetID
+
+			actual, svcErr := snippetService.Create(ctx, snippetToCreate)
 
 			require.Nil(t, svcErr)
-			assert.Equal(t, expectedID, gotSnippet.ID)
-			assert.Equal(t, expectedResult.Title, gotSnippet.Title)
-			assert.Equal(t, expectedResult.Content, gotSnippet.Content)
-			assert.Equal(t, expectedResult.ExpiresAt, gotSnippet.ExpiresAt)
-			assert.True(t, gotSnippet.CreatedAt.After(now))
-			assert.True(t, gotSnippet.CreatedAt.Before(now.Add(time.Minute)))
+			assert.Equal(t, expectedSnippet, actual)
 		})
 
 		t.Run("Times in different TZ", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
-			now := time.Now().In(time.FixedZone("CET", 60*60))
-			expiresAt := now.Add(time.Hour * 24).In(time.FixedZone("EET", 60*60*2))
+			ctrl := gomock.NewController(t)
 
-			expectedID := uint(200)
-			expectedResult := snippets.Snippet{
-				ID:        expectedID,
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			fakeNow := time.Now().In(time.FixedZone("CET", 60*60))
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return fakeNow },
+			)
+
+			// ===============================================
+			// Init test data
+			expiresAt := fakeNow.Add(time.Hour * 24).In(time.FixedZone("EET", 60*60*2))
+
+			snippetToCreate := snippets.Snippet{
 				Title:     "Best snippet ever",
 				Content:   "Some text here…",
-				CreatedAt: now,
-				UpdatedAt: now,
+				ExpiresAt: expiresAt,
+			}
+
+			snippetPassedToStorage := snippets.Snippet{
+				Title:     snippetToCreate.Title,
+				Content:   snippetToCreate.Content,
+				CreatedAt: fakeNow,
+				UpdatedAt: fakeNow,
 				ExpiresAt: expiresAt.UTC(),
 			}
 
-			mockStorage.EXPECT().Create(ctx, gomock.Any()).Return(expectedID, nil)
+			snippetID := uint(200)
 
-			gotSnippet, svcErr := snippetService.Create(ctx, snippets.Snippet{
-				Title:     expectedResult.Title,
-				Content:   expectedResult.Content,
-				ExpiresAt: expectedResult.ExpiresAt,
-			})
+			// ===============================================
+			// Describe Mock Calls
+			mockStorage.EXPECT().Create(ctx, snippetPassedToStorage).Return(snippetID, nil)
+
+			// ===============================================
+			// Run Test
+			expectedSnippet := snippetPassedToStorage
+			expectedSnippet.ID = snippetID
+
+			actual, svcErr := snippetService.Create(ctx, snippetToCreate)
 
 			require.Nil(t, svcErr)
-			assert.Equal(t, expectedID, gotSnippet.ID)
-			assert.Equal(t, expectedResult.Title, gotSnippet.Title)
-			assert.Equal(t, expectedResult.Content, gotSnippet.Content)
-			assert.Equal(t, expectedResult.ExpiresAt, gotSnippet.ExpiresAt)
-			assert.True(t, gotSnippet.CreatedAt.After(now))
-			assert.True(t, gotSnippet.CreatedAt.Before(now.Add(time.Minute)))
+			assert.Equal(t, expectedSnippet, actual)
 		})
 	})
 
-	t.Run("Error during creation", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockStorage := NewMockStorage(ctrl)
-
-		snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+	t.Run("Failed to create snippet", func(t *testing.T) {
+		t.Parallel()
 
 		ctx := context.Background()
+		ctrl := gomock.NewController(t)
 
-		expectedID := uint(0)
+		// ===============================================
+		// Init Mocks and Service
+		mockStorage := NewMockStorage(ctrl)
+
+		fakeNow := time.Now().UTC()
+
+		snippetService := snippets.NewService(
+			mockStorage,
+			nopslog.NewNoplogger(),
+			func() time.Time { return fakeNow },
+		)
+
+		// ===============================================
+		// Init test data
 		expectedErr := errors.New("something wrong happen 😱")
 
-		mockStorage.EXPECT().Create(ctx, gomock.Any()).Return(expectedID, expectedErr)
+		// ===============================================
+		// Describe Mock Calls
+		mockStorage.EXPECT().Create(ctx, gomock.Any()).Return(0, expectedErr)
 
+		// ===============================================
+		// Run Test
 		_, svcErr := snippetService.Create(ctx, snippets.Snippet{})
 
 		require.NotNil(t, svcErr)
 		assert.Equal(t, service.InternalError, svcErr.Type)
-		assert.True(t, errors.Is(svcErr, expectedErr))
+		assert.ErrorIs(t, svcErr, expectedErr)
 	})
 }
 
 func TestSnippetService_Get(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Successfully get a snippet", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockStorage := NewMockStorage(ctrl)
-
-		snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+		t.Parallel()
 
 		ctx := context.Background()
-		now := time.Now().UTC()
-		expiresAt := now.Add(time.Hour * 24)
+		ctrl := gomock.NewController(t)
 
-		expectedID := uint(200)
-		expectedResult := snippets.Snippet{
-			ID:        expectedID,
+		// ===============================================
+		// Init Mocks and Service
+		mockStorage := NewMockStorage(ctrl)
+
+		snippetService := snippets.NewService(
+			mockStorage,
+			nopslog.NewNoplogger(),
+			func() time.Time { return time.Now().UTC() },
+		)
+
+		// ===============================================
+		// Init test data
+		snippet := snippets.Snippet{
+			ID:        200,
 			Title:     "Best snippet ever",
 			Content:   "Some text here…",
-			CreatedAt: now,
-			UpdatedAt: now,
-			ExpiresAt: expiresAt,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
 		}
 
-		mockStorage.EXPECT().Get(ctx, expectedID).Return(expectedResult, nil)
+		// ===============================================
+		// Describe Mock Calls
+		mockStorage.EXPECT().Get(ctx, snippet.ID).Return(snippet, nil)
 
-		gotSnippet, svcErr := snippetService.Get(ctx, 200)
+		// ===============================================
+		// Run Test
+		actual, svcErr := snippetService.Get(ctx, 200)
 
 		require.Nil(t, svcErr)
-		assert.Equal(t, expectedID, gotSnippet.ID)
-		assert.Equal(t, expectedResult.Title, gotSnippet.Title)
-		assert.Equal(t, expectedResult.Content, gotSnippet.Content)
-		assert.Equal(t, expectedResult.ExpiresAt, gotSnippet.ExpiresAt)
-		assert.Equal(t, expectedResult.CreatedAt, gotSnippet.CreatedAt)
+		assert.Equal(t, snippet, actual)
 	})
 
 	t.Run("Failed to get a snippet", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("Internal error", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Init test data
 			expectedErr := errors.New("failed to get")
 
+			// ===============================================
+			// Describe Mock Calls
 			mockStorage.EXPECT().Get(ctx, uint(200)).Return(snippets.Snippet{}, expectedErr)
 
-			gotSnippet, svcErr := snippetService.Get(ctx, 200)
+			actual, svcErr := snippetService.Get(ctx, 200)
 			require.NotNil(t, svcErr)
-			assert.Equal(t, snippets.Snippet{}, gotSnippet)
+			assert.Empty(t, actual)
 			assert.Equal(t, service.InternalError, svcErr.Type)
-			assert.True(t, errors.Is(svcErr, expectedErr))
+			assert.ErrorIs(t, svcErr, expectedErr)
 		})
 
 		t.Run("Not found", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
+			ctrl := gomock.NewController(t)
 
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Describe Mock Calls
 			mockStorage.EXPECT().Get(ctx, uint(200)).Return(snippets.Snippet{}, snippets.ErrNotFound)
 
-			gotSnippet, svcErr := snippetService.Get(ctx, 200)
+			// ===============================================
+			// Run Test
+			actual, svcErr := snippetService.Get(ctx, 200)
+
 			require.NotNil(t, svcErr)
-			assert.Equal(t, snippets.Snippet{}, gotSnippet)
+			assert.Empty(t, actual)
 			assert.Equal(t, service.NotFound, svcErr.Type)
-			assert.True(t, errors.Is(svcErr, snippets.ErrNotFound))
+			assert.ErrorIs(t, svcErr, snippets.ErrNotFound)
 		})
 	})
 }
 
 func TestSnippetService_List(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Successfully list snippets", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("Total is less than limit", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
-			now1 := time.Now().UTC()
-			now2 := now1.Add(time.Hour)
-			expiresAt1 := now1.Add(time.Hour * 24)
-			expiresAt2 := expiresAt1.Add(time.Hour * 48)
+			ctrl := gomock.NewController(t)
 
-			expectedResult := []snippets.Snippet{
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Init test data
+			listOfSnippets := []snippets.Snippet{
 				{
 					ID:        1,
 					Title:     "Best snippet ever",
 					Content:   "Some text here…",
-					CreatedAt: now1,
-					UpdatedAt: now1,
-					ExpiresAt: expiresAt1,
+					CreatedAt: time.Now().UTC(),
+					UpdatedAt: time.Now().UTC(),
+					ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
 				},
 				{
 					ID:        2,
 					Title:     "Best snippet ever",
 					Content:   "Some text here…",
-					CreatedAt: now2,
-					UpdatedAt: now2,
-					ExpiresAt: expiresAt2,
+					CreatedAt: time.Now().UTC().Add(time.Hour),
+					UpdatedAt: time.Now().UTC().Add(time.Hour),
+					ExpiresAt: time.Now().UTC().Add(time.Hour * 48),
 				},
 			}
 			limit := uint(10)
 			offset := uint(0)
 
-			expectedPagination := service.Pagination{
-				Limit:       limit,
-				Offset:      offset,
-				Total:       2,
-				TotalPages:  1,
-				CurrentPage: 1,
-			}
+			total := uint(2)
 
-			mockStorage.EXPECT().Total(ctx).Return(expectedPagination.Total, nil)
-			mockStorage.EXPECT().List(ctx, expectedPagination).Return(expectedResult, nil)
+			pagination := snippets.NewPagination(limit, offset, total)
 
-			actualSnippets, pagination, svcErr := snippetService.List(ctx, limit, offset)
+			// ===============================================
+			// Describe Mock Calls
+			gomock.InOrder(
+				mockStorage.EXPECT().Total(ctx).Return(total, nil),
+				mockStorage.EXPECT().List(ctx, pagination).Return(listOfSnippets, nil),
+			)
+
+			// ===============================================
+			// Run Test
+			actualSnippets, actualPagination, svcErr := snippetService.List(ctx, limit, offset)
+
 			require.Nil(t, svcErr)
-			assert.EqualValues(t, expectedResult, actualSnippets)
-			assert.Equal(t, expectedPagination, pagination)
+			assert.Equal(t, listOfSnippets, actualSnippets)
+			assert.Equal(t, pagination, actualPagination)
 		})
 
 		t.Run("Total is greater than limit", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
-			now1 := time.Now().UTC()
-			now2 := now1.Add(time.Hour)
-			expiresAt1 := now1.Add(time.Hour * 24)
-			expiresAt2 := expiresAt1.Add(time.Hour * 48)
+			ctrl := gomock.NewController(t)
 
-			expectedResult := []snippets.Snippet{
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Init test data
+			listOfSnippets := []snippets.Snippet{
 				{
 					ID:        1,
 					Title:     "Best snippet ever",
 					Content:   "Some text here…",
-					CreatedAt: now1,
-					UpdatedAt: now1,
-					ExpiresAt: expiresAt1,
+					CreatedAt: time.Now().UTC(),
+					UpdatedAt: time.Now().UTC(),
+					ExpiresAt: time.Now().UTC().Add(time.Hour * 24),
 				},
 				{
 					ID:        2,
 					Title:     "Best snippet ever",
 					Content:   "Some text here…",
-					CreatedAt: now2,
-					UpdatedAt: now2,
-					ExpiresAt: expiresAt2,
+					CreatedAt: time.Now().UTC().Add(time.Hour),
+					UpdatedAt: time.Now().UTC().Add(time.Hour),
+					ExpiresAt: time.Now().UTC().Add(time.Hour * 48),
 				},
 			}
 			limit := uint(2)
-			offset := uint(4)
+			offset := uint(0)
 
-			expectedPagination := service.Pagination{
-				Limit:       limit,
-				Offset:      offset,
-				Total:       20,
-				TotalPages:  10,
-				CurrentPage: 3,
-			}
+			total := uint(20)
 
-			mockStorage.EXPECT().Total(ctx).Return(expectedPagination.Total, nil)
-			mockStorage.EXPECT().List(ctx, expectedPagination).Return(expectedResult, nil)
+			pagination := snippets.NewPagination(limit, offset, total)
 
-			actualSnippets, pagination, svcErr := snippetService.List(ctx, limit, offset)
+			// ===============================================
+			// Describe Mock Calls
+			gomock.InOrder(
+				mockStorage.EXPECT().Total(ctx).Return(total, nil),
+				mockStorage.EXPECT().List(ctx, pagination).Return(listOfSnippets, nil),
+			)
+
+			// ===============================================
+			// Run Test
+			actualSnippets, actualPagination, svcErr := snippetService.List(ctx, limit, offset)
+
 			require.Nil(t, svcErr)
-			assert.EqualValues(t, expectedResult, actualSnippets)
-			assert.Equal(t, expectedPagination, pagination)
-		})
-
-		t.Run("Empty list", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
-
-			ctx := context.Background()
-
-			var expectedResult []snippets.Snippet
-			limit := uint(2)
-			offset := uint(40)
-
-			expectedPagination := service.Pagination{
-				Limit:       limit,
-				Offset:      offset,
-				Total:       20,
-				TotalPages:  10,
-				CurrentPage: 21,
-			}
-
-			mockStorage.EXPECT().Total(ctx).Return(expectedPagination.Total, nil)
-			mockStorage.EXPECT().List(ctx, expectedPagination).Return(expectedResult, nil)
-
-			actualSnippets, pagination, svcErr := snippetService.List(ctx, limit, offset)
-			require.Nil(t, svcErr)
-			assert.EqualValues(t, expectedResult, actualSnippets)
-			assert.Equal(t, expectedPagination, pagination)
+			assert.Equal(t, listOfSnippets, actualSnippets)
+			assert.Equal(t, pagination, actualPagination)
 		})
 	})
 
 	t.Run("Failed to list snippets", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("List returned error", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
+			ctrl := gomock.NewController(t)
 
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Init test data
 			limit := uint(10)
 			offset := uint(0)
+			total := uint(10)
 
 			expectedErr := errors.New("OMG!!! VERY BAD 🤯")
 
-			expectedPagination := service.Pagination{
-				Limit:       limit,
-				Offset:      offset,
-				CurrentPage: 1,
-			}
+			pagination := snippets.NewPagination(limit, offset, total)
 
-			mockStorage.EXPECT().Total(ctx).Return(uint(0), nil)
-			mockStorage.EXPECT().List(ctx, expectedPagination).Return([]snippets.Snippet{}, expectedErr)
+			// ===============================================
+			// Describe Mock Calls
+			gomock.InOrder(
+				mockStorage.EXPECT().Total(ctx).Return(total, nil),
+				mockStorage.EXPECT().List(ctx, pagination).Return([]snippets.Snippet{}, expectedErr),
+			)
 
-			actualSnippets, pagination, svcErr := snippetService.List(ctx, limit, offset)
+			// ===============================================
+			// Run Test
+			actualSnippets, _, svcErr := snippetService.List(ctx, limit, offset)
+
+			assert.Empty(t, actualSnippets)
+
 			require.NotNil(t, svcErr)
 			assert.Equal(t, service.InternalError, svcErr.Type)
-			assert.True(t, errors.Is(svcErr, expectedErr))
-			assert.Nil(t, actualSnippets)
-			assert.Equal(t, expectedPagination, pagination)
+			assert.ErrorIs(t, svcErr, expectedErr)
 		})
 
 		t.Run("Total returned error", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
+			ctrl := gomock.NewController(t)
 
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Init test data
 			limit := uint(10)
 			offset := uint(0)
 
 			expectedErr := errors.New("OMG!!! VERY BAD 🤯")
 
-			expectedPagination := service.Pagination{
-				Limit:  0,
-				Offset: 0,
-			}
+			// ===============================================
+			// Describe Mock Calls
+			gomock.InOrder(
+				mockStorage.EXPECT().Total(ctx).Return(0, expectedErr),
+			)
 
-			mockStorage.EXPECT().Total(ctx).Return(uint(0), expectedErr)
+			// ===============================================
+			// Run Test
+			actualSnippets, _, svcErr := snippetService.List(ctx, limit, offset)
 
-			actualSnippets, pagination, svcErr := snippetService.List(ctx, limit, offset)
+			assert.Empty(t, actualSnippets)
+
 			require.NotNil(t, svcErr)
 			assert.Equal(t, service.InternalError, svcErr.Type)
-			assert.True(t, errors.Is(svcErr, expectedErr))
-			assert.Nil(t, actualSnippets)
-			assert.Equal(t, expectedPagination, pagination)
+			assert.ErrorIs(t, svcErr, expectedErr)
 		})
 	})
 }
 
 func TestSnippetService_SoftDelete(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Successfully soft-delete snippet", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockStorage := NewMockStorage(ctrl)
-
-		snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+		t.Parallel()
 
 		ctx := context.Background()
-		expectedID := uint(200)
+		ctrl := gomock.NewController(t)
 
-		mockStorage.EXPECT().SoftDelete(ctx, expectedID).Return(nil)
+		// ===============================================
+		// Init Mocks and Service
+		mockStorage := NewMockStorage(ctrl)
 
-		svcErr := snippetService.SoftDelete(ctx, expectedID)
+		snippetService := snippets.NewService(
+			mockStorage,
+			nopslog.NewNoplogger(),
+			func() time.Time { return time.Now().UTC() },
+		)
+
+		// ===============================================
+		// Init test data
+		id := uint(200)
+
+		// ===============================================
+		// Describe Mock Calls
+		mockStorage.EXPECT().SoftDelete(ctx, id).Return(nil)
+
+		// ===============================================
+		// Run Test
+		svcErr := snippetService.SoftDelete(ctx, id)
 
 		require.Nil(t, svcErr)
 	})
 
 	t.Run("Failed to soft-delete snippet", func(t *testing.T) {
+		t.Parallel()
+
 		t.Run("Not found", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
-			expectedID := uint(200)
+			ctrl := gomock.NewController(t)
+
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Init test data
+			id := uint(200)
 			expectedErr := snippets.ErrNotFound
 
-			mockStorage.EXPECT().SoftDelete(ctx, expectedID).Return(expectedErr)
+			// ===============================================
+			// Describe Mock Calls
+			mockStorage.EXPECT().SoftDelete(ctx, id).Return(expectedErr)
 
-			svcErr := snippetService.SoftDelete(ctx, expectedID)
+			// ===============================================
+			// Run Test
+			svcErr := snippetService.SoftDelete(ctx, id)
 
 			require.NotNil(t, svcErr)
 			assert.Equal(t, service.NotFound, svcErr.Type)
-			assert.Equal(t, expectedErr, svcErr.Base)
+			assert.ErrorIs(t, svcErr, expectedErr)
 		})
 
 		t.Run("Internal error", func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			mockStorage := NewMockStorage(ctrl)
-
-			snippetService := snippets.NewService(mockStorage, nopslog.NewNoplogger())
+			t.Parallel()
 
 			ctx := context.Background()
-			expectedID := uint(200)
+			ctrl := gomock.NewController(t)
+
+			// ===============================================
+			// Init Mocks and Service
+			mockStorage := NewMockStorage(ctrl)
+
+			snippetService := snippets.NewService(
+				mockStorage,
+				nopslog.NewNoplogger(),
+				func() time.Time { return time.Now().UTC() },
+			)
+
+			// ===============================================
+			// Init test data
+			id := uint(200)
 			expectedErr := errors.New("this is not suppose to happen 🚑")
 
-			mockStorage.EXPECT().SoftDelete(ctx, expectedID).Return(expectedErr)
+			// ===============================================
+			// Describe Mock Calls
+			mockStorage.EXPECT().SoftDelete(ctx, id).Return(expectedErr)
 
-			svcErr := snippetService.SoftDelete(ctx, expectedID)
+			// ===============================================
+			// Run Test
+			svcErr := snippetService.SoftDelete(ctx, id)
 
 			require.NotNil(t, svcErr)
 			assert.Equal(t, service.InternalError, svcErr.Type)
-			assert.True(t, errors.Is(svcErr, expectedErr))
+			assert.ErrorIs(t, svcErr, expectedErr)
 		})
 	})
 }

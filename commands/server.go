@@ -161,6 +161,7 @@ func (c ServerCmd) runHTTPServer(ctx context.Context, logger *slog.Logger, db *s
 	snippetService := snippets.NewService(
 		snippetStorage,
 		logger.With(slog.String("service", "snippets")),
+		func() time.Time { return time.Now().UTC() },
 	)
 	snippetTransport := snippets.NewTransport(snippetService, logger)
 

@@ -3,11 +3,9 @@ package commands
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -26,9 +24,6 @@ import (
 	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
 )
 
-// ErrStopped is returned when the server is gracefully stopped.
-var ErrStopped = errors.New("stopped")
-
 // ServerCmd implements kong.Command for the main server command.
 type ServerCmd struct {
 	Postgres postgres.Flags `kong:"embed"`
@@ -40,8 +35,17 @@ type ServerCmd struct {
 
 // Run (ServerCmd) runs the main server command.
 func (c ServerCmd) Run(kVars kong.Vars) error {
-	gr, ctx := errgroup.WithContext(context.Background())
+	// =========================================================================
+	// Init Context that listens for stop signals
+	notifyCtx, notifyCancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer notifyCancel()
 
+	// =========================================================================
+	// Init Error Group
+	gr, ctx := errgroup.WithContext(notifyCtx)
+
+	// =========================================================================
+	// Init Logger
 	logger := c.Logger.Init()
 
 	logger.Info(
@@ -57,7 +61,6 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 
 	// =========================================================================
 	// Init PostgreSQL Connection
-
 	db, err := c.Postgres.OpenStdSQLDB()
 	if err != nil {
 		return fmt.Errorf("open database connection: %w", err)
@@ -74,7 +77,6 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 
 	// ================================================
 	// Apply SQL Migrations
-
 	migrationCmd := UpCmd{
 		Postgres: c.Postgres,
 		Logger:   c.Logger,
@@ -86,7 +88,6 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 
 	// =========================================================================
 	// Start Private API Server
-
 	gr.Go(func() error {
 		return c.runHTTPServer(
 			ctx,
@@ -99,22 +100,7 @@ func (c ServerCmd) Run(kVars kong.Vars) error {
 
 	// =========================================================================
 	// Wait for stop signal
-
-	gr.Go(func() error {
-		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-		defer signal.Stop(stop)
-
-		select {
-		case <-stop:
-			logger.Info("🛑 ➡ received stop signal")
-			return ErrStopped
-		case <-ctx.Done():
-			return nil
-		}
-	})
-
-	if err = gr.Wait(); err != nil && !errors.Is(err, ErrStopped) {
+	if err = gr.Wait(); err != nil {
 		return fmt.Errorf("error during wait: %w", err)
 	}
 

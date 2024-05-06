@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/titusjaka/go-sample/internal/business/snippets"
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgtest"
-	"github.com/titusjaka/go-sample/internal/infrastructure/service"
+	"github.com/titusjaka/go-sample/v2/internal/business/snippets"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgtest"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/service"
 )
 
 const envFile = "../../../.env"

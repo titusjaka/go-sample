@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgtest"
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgtest/testdata"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgtest"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgtest/testdata"
 )
 
 const (

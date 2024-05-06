@@ -1,4 +1,4 @@
-module github.com/titusjaka/go-sample
+module github.com/titusjaka/go-sample/v2
 
 go 1.22
 

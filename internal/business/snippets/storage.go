@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/service"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/service"
 )
 
 // ErrNotFound error used to signal higher level about sql.ErrNoRows error

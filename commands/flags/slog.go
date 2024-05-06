@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/nopslog"
 )
 
 type Logger struct {

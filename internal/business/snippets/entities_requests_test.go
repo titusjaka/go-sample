@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/titusjaka/go-sample/internal/business/snippets"
-	"github.com/titusjaka/go-sample/internal/infrastructure/utils/testutils"
+	"github.com/titusjaka/go-sample/v2/internal/business/snippets"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/utils/testutils"
 )
 
 func TestCreateSnippetRequest_Validate(t *testing.T) {

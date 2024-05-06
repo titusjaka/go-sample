@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/service"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/service"
 )
 
 // ErrResponse renderer type for handling all sorts of business errors.

@@ -14,7 +14,7 @@ import (
 
 	kongdotenv "github.com/titusjaka/kong-dotenv-go"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgmigrator"
 )
 
 // InitTestDatabase creates initializes a new dummy database in s PostgreSQL server

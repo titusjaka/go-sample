@@ -5,8 +5,8 @@ import (
 
 	kongdotenv "github.com/titusjaka/kong-dotenv-go"
 
-	"github.com/titusjaka/go-sample/commands"
-	"github.com/titusjaka/go-sample/internal/infrastructure/kongflag"
+	"github.com/titusjaka/go-sample/v2/commands"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/kongflag"
 )
 
 type App struct {

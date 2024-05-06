@@ -3,7 +3,7 @@ package snippets
 import (
 	"time"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/service"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/service"
 )
 
 // SnippetResponse represents a common snippet-response struct

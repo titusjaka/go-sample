@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgmigrator"
 )
 
 func CreateTemplateDatabase(flags Flags, migrations fs.FS) error {

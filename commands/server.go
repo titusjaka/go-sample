@@ -17,11 +17,11 @@ import (
 	"github.com/go-chi/render"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/titusjaka/go-sample/commands/flags"
-	"github.com/titusjaka/go-sample/internal/business/snippets"
-	"github.com/titusjaka/go-sample/internal/infrastructure/api"
-	"github.com/titusjaka/go-sample/internal/infrastructure/kongflag"
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
+	"github.com/titusjaka/go-sample/v2/commands/flags"
+	"github.com/titusjaka/go-sample/v2/internal/business/snippets"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/api"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/kongflag"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres"
 )
 
 // ServerCmd implements kong.Command for the main server command.

@@ -9,8 +9,8 @@ import (
 
 	kongdotenv "github.com/titusjaka/kong-dotenv-go"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgtest"
-	"github.com/titusjaka/go-sample/migrations"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgtest"
+	"github.com/titusjaka/go-sample/v2/migrations"
 )
 
 func TestMain(m *testing.M) {

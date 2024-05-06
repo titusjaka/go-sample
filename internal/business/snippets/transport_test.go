@@ -9,9 +9,9 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"go.uber.org/mock/gomock"
 
-	"github.com/titusjaka/go-sample/internal/business/snippets"
-	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
-	"github.com/titusjaka/go-sample/internal/infrastructure/service"
+	"github.com/titusjaka/go-sample/v2/internal/business/snippets"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/nopslog"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/service"
 )
 
 func TestTransport_listSnippets(t *testing.T) {

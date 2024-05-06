@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/service"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/service"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -typed -source=service.go -destination ./service_mock_test.go -package snippets_test -mock_names Storage=MockStorage

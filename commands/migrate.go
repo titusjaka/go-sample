@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/titusjaka/go-sample/commands/flags"
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgmigrator"
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres/pgtest"
-	"github.com/titusjaka/go-sample/migrations"
+	"github.com/titusjaka/go-sample/v2/commands/flags"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgmigrator"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres/pgtest"
+	"github.com/titusjaka/go-sample/v2/migrations"
 )
 
 // MigrateCmd implements kong.Command for migrations. To use this command you need to add migrate.Command

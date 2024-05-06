@@ -1,7 +1,7 @@
 package pgtest
 
 import (
-	"github.com/titusjaka/go-sample/internal/infrastructure/postgres"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/postgres"
 )
 
 type Flags struct {

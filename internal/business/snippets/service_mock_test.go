@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	snippets "github.com/titusjaka/go-sample/internal/business/snippets"
-	service "github.com/titusjaka/go-sample/internal/infrastructure/service"
+	snippets "github.com/titusjaka/go-sample/v2/internal/business/snippets"
+	service "github.com/titusjaka/go-sample/v2/internal/infrastructure/service"
 	gomock "go.uber.org/mock/gomock"
 )
 

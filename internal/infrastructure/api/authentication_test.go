@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/titusjaka/go-sample/internal/infrastructure/api"
-	"github.com/titusjaka/go-sample/internal/infrastructure/nopslog"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/api"
+	"github.com/titusjaka/go-sample/v2/internal/infrastructure/nopslog"
 )
 
 func TestApi_InternalCommunication(t *testing.T) {

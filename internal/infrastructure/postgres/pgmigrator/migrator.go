@@ -42,7 +42,7 @@ func NewMigrator(db *sql.DB, source fs.FS) *Migrator {
 func Create(migrationsDir, name string) (fullPath string, err error) {
 	dir := filepath.Clean(migrationsDir)
 
-	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+	if err = os.MkdirAll(dir, 0o750); err != nil {
 		return "", fmt.Errorf("create directory for migrations: %w", err)
 	}
 

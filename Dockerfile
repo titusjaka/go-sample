@@ -32,7 +32,7 @@ RUN go-task build
 
 
 # Put everything together in a clean image
-FROM alpine:3.19
+FROM alpine:3.20
 
 ARG NAME
 

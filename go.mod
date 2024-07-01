@@ -9,7 +9,7 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/render v1.0.3
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/gorilla/schema v1.4.0
+	github.com/gorilla/schema v1.4.1
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/rubenv/sql-migrate v1.6.1
 	github.com/stretchr/testify v1.9.0

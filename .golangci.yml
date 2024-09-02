@@ -1,7 +1,7 @@
 # options for analysis running
 run:
   # Select the Go version to target. The default is '1.13'.
-  go: "1.22"
+  go: "1.23"
 
   # default concurrency is a available CPU number
   concurrency: 4
@@ -248,7 +248,6 @@ linters:
     - durationcheck
     - errcheck
     - errorlint
-    - exportloopref
     - forbidigo
     - forcetypeassert
     - gocognit

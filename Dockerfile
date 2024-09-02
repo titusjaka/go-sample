@@ -1,7 +1,7 @@
 ARG NAME=go-sample
 ARG VERSION
 
-FROM golang:1.22-alpine3.19 AS build-env
+FROM golang:1.23-alpine3.19 AS build-env
 
 # Declare build arguments
 ARG NAME

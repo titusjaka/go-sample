@@ -72,11 +72,11 @@ func (m *Migrator) Up(ctx context.Context) (int, error) {
 }
 
 // Down rollback a number of migrations
-func (m *Migrator) Down(ctx context.Context, max int) (int, error) {
-	return m.apply(ctx, migrate.Down, max)
+func (m *Migrator) Down(ctx context.Context, maxSteps int) (int, error) {
+	return m.apply(ctx, migrate.Down, maxSteps)
 }
 
-func (m *Migrator) apply(ctx context.Context, direction migrate.MigrationDirection, max int) (int, error) {
+func (m *Migrator) apply(ctx context.Context, direction migrate.MigrationDirection, maxSteps int) (int, error) {
 	tx, err := m.db.Begin()
 	if err != nil {
 		return 0, fmt.Errorf("begin db transaction: %w", err)
@@ -94,7 +94,7 @@ func (m *Migrator) apply(ctx context.Context, direction migrate.MigrationDirecti
 		return 0, fmt.Errorf("acquire advisory lock: %w", err)
 	}
 
-	applied, err := migrate.ExecMax(m.db, "postgres", m.source, direction, max)
+	applied, err := migrate.ExecMax(m.db, "postgres", m.source, direction, maxSteps)
 	if err != nil {
 		return 0, fmt.Errorf("apply database migrations: %w", err)
 	}

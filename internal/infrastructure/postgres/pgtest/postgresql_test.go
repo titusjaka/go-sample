@@ -14,6 +14,9 @@ const (
 )
 
 func TestInitTestDatabase(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skip integration test due to 'short' flag")
+	}
 	t.Parallel()
 
 	// ====================================================

@@ -331,6 +331,13 @@ issues:
       # We need to suppress it in tests for helper functions purpose.
       text: G107
 
+    - path: _test\.go
+      linters:
+        - gosec
+      # G115: integer overflow conversion int -> uint
+      # Don't need to test it in test files.
+      text: G115
+
   # Independently of option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all
   # excluded by default patterns execute `golangci-lint run --help`.

@@ -11,7 +11,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/gorilla/schema v1.4.1
 	github.com/jackc/pgx/v5 v5.7.1
-	github.com/rubenv/sql-migrate v1.7.0
+	github.com/rubenv/sql-migrate v1.7.1
 	github.com/stretchr/testify v1.10.0
 	github.com/titusjaka/kong-dotenv-go v0.1.0
 	go.uber.org/mock v0.5.0

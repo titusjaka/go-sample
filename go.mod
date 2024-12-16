@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/alecthomas/kong v1.6.0
 	github.com/gavv/httpexpect/v2 v2.16.0
-	github.com/go-chi/chi/v5 v5.1.0
+	github.com/go-chi/chi/v5 v5.2.0
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/render v1.0.3
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0

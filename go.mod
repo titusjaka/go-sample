@@ -1,6 +1,6 @@
 module github.com/titusjaka/go-sample/v2
 
-go 1.23
+go 1.23.0
 
 require (
 	github.com/alecthomas/kong v1.8.0
@@ -15,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/titusjaka/kong-dotenv-go v0.1.0
 	go.uber.org/mock v0.5.0
-	golang.org/x/sync v0.11.0
+	golang.org/x/sync v0.15.0
 )
 
 require (
